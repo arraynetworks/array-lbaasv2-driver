@@ -26,10 +26,10 @@ from neutron_lib import constants as lb_const
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
-from arraylbaasv2driver.common import plugin_rpc
-from arraylbaasv2driver.common import agent_rpc
-from arraylbaasv2driver.common import constants_v2
-from arraylbaasv2driver.common import exceptions as array_exc
+from array_lbaasv2_driver.common import plugin_rpc
+from array_lbaasv2_driver.common import agent_rpc
+from array_lbaasv2_driver.common import constants_v2
+from array_lbaasv2_driver.common import exceptions as array_exc
 
 LOG = logging.getLogger(__name__)
 
