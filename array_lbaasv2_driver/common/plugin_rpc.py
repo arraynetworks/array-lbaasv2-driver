@@ -15,7 +15,7 @@ import logging
 from neutron_lib import constants as n_const
 from neutron_lbaas.services.loadbalancer import data_models
 
-from arraylbaasv2driver.common import db
+from array_lbaasv2_driver.common import db
 
 LOG = logging.getLogger(__name__)
 

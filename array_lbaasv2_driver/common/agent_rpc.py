@@ -19,7 +19,7 @@ import oslo_messaging as messaging
 from neutron.common import rpc
 from neutron_lbaas.services.loadbalancer import data_models
 
-from arraylbaasv2driver.common import constants_v2
+from array_lbaasv2_driver.common import constants_v2
 
 LOG = logging.getLogger(__name__)
 

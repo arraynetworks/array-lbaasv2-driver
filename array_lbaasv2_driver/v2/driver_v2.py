@@ -12,8 +12,8 @@
 # limitations under the License.
 #
 
-import arraylbaasv2driver
-from arraylbaasv2driver.common.driver_v2 import ArrayDriverV2
+import array_lbaasv2_driver
+from array_lbaasv2_driver.common.driver_v2 import ArrayDriverV2
 
 from oslo_log import log as logging
 
@@ -37,7 +37,7 @@ class ArrayLBaaSV2Driver(driver_base.LoadBalancerBaseDriver):
         self.l7rule = L7RuleManager(self)
 
         LOG.debug("ArrayLBaaSV2Driver: initializing, version=%s, impl=%s"
-                  % (VERSION, arraylbaasv2driver.__version__))
+                  % (VERSION, array_lbaasv2_driver.__version__))
 
         self.array = ArrayDriverV2(plugin, self)
 
