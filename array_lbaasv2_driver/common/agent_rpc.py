@@ -240,7 +240,8 @@ class LBaaSv2AgentRPC(object):
             self,
             context,
             old_health_monitor,
-            health_monitor
+            health_monitor,
+            host
     ):
         return self.cast(
             context,

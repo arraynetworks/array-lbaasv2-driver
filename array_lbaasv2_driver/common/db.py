@@ -18,7 +18,6 @@ from oslo_log import log as logging
 from oslo_config import cfg
 
 from neutron.plugins.ml2 import models
-from neutron.plugins.ml2 import db
 
 CMCC_DEFAULT_LEVEL = 1
 CMCC_DEFAULT_NETWORK_TYPE = 'vlan'
@@ -37,6 +36,11 @@ DB_OPTS = [
         default=10,
         help=('Maximum number to try to request vlan'
               'from database')
+    ),
+    cfg.StrOpt(
+        'array_request_vlan_hostname',
+        default=10,
+        help=('Hostname of port binding')
     )
 ]
 
@@ -46,7 +50,7 @@ def _get_binding_level(context, port_id, level):
     result = None
     host = None
     if port_id:
-        host = db.get_port_binding_host(context, port_id)
+        host = cfg.CONF.arraynetworks.array_request_vlan_hostname
         if not host:
             LOG.error("Unable to get host by port_id %(port_id)s", {'port_id': port_id})
             return result
