@@ -291,9 +291,7 @@ class PoolManager(BaseManager):
 
     def _get_pool_dict(self, pool):
         pool_dict = pool.to_dict(
-            listener=False,
             listeners=False,
-            #loadbalancer=False,
             healthmonitor=False,
             members=False,
             l7_policies=False)
