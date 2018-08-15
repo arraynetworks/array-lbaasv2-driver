@@ -171,6 +171,9 @@ class ArrayLoadBalancerCallbacks(object):
     def get_subnet(self, context, subnet_id):
         return self.driver.plugin.db._core_plugin.get_subnet(context, subnet_id)
 
+    def get_network(self, context, network_id):
+        return self.driver.plugin.db._core_plugin.get_network(context, network_id)
+
     def get_port(self, context, port_id):
         return self.driver.plugin.db._core_plugin.get_port(context, port_id)
 
