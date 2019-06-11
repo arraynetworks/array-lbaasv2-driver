@@ -31,6 +31,8 @@ class ArrayLoadBalancerCallbacks(object):
     OBJ_TYPE_POOL = "pool"
     OBJ_TYPE_MEMBER = "member"
     OBJ_TYPE_HM = "hm"
+    OBJ_TYPE_L7RULE = "l7rule"
+    OBJ_TYPE_L7POLICY = "l7policy"
 
     def __init__(self, driver):
         LOG.debug('Apv status callbacks RPC subscriber initialized')
@@ -56,6 +58,14 @@ class ArrayLoadBalancerCallbacks(object):
             "hm.success": self.driver.health_monitor.successful_completion,
             "hm.delete": self.driver.health_monitor.successful_completion,
             "hm.fail": self.driver.health_monitor.failed_completion,
+
+            "l7rule.success": self.driver.l7rule.successful_completion,
+            "l7rule.delete": self.driver.l7rule.successful_completion,
+            "l7rule.fail": self.driver.l7rule.failed_completion,
+
+            "l7policy.success": self.driver.l7policy.successful_completion,
+            "l7policy.delete": self.driver.l7policy.successful_completion,
+            "l7policy.fail": self.driver.l7policy.failed_completion,
 
             "loadbalancer.model": data_models.LoadBalancer,
             "listener.model": data_models.Listener,
@@ -120,7 +130,7 @@ class ArrayLoadBalancerCallbacks(object):
         self._failed_completion(context, self.OBJ_TYPE_LISTENER, obj)
 
     def pool_successful_completion(self, context, obj):
-        self._successful_completion(context, self.OBJ_TYPE_POOL, obj) 
+        self._successful_completion(context, self.OBJ_TYPE_POOL, obj)
 
     def pool_deleting_completion(self, context, obj):
         self._deleting_completion(context, self.OBJ_TYPE_POOL, obj)
@@ -129,7 +139,7 @@ class ArrayLoadBalancerCallbacks(object):
         self._failed_completion(context, self.OBJ_TYPE_POOL, obj)
 
     def member_successful_completion(self, context, obj):
-        self._successful_completion(context, self.OBJ_TYPE_MEMBER, obj) 
+        self._successful_completion(context, self.OBJ_TYPE_MEMBER, obj)
 
     def member_deleting_completion(self, context, obj):
         self._deleting_completion(context, self.OBJ_TYPE_MEMBER, obj)
@@ -138,13 +148,31 @@ class ArrayLoadBalancerCallbacks(object):
         self._failed_completion(context, self.OBJ_TYPE_MEMBER, obj)
 
     def hm_successful_completion(self, context, obj):
-        self._successful_completion(context, self.OBJ_TYPE_HM, obj) 
+        self._successful_completion(context, self.OBJ_TYPE_HM, obj)
 
     def hm_deleting_completion(self, context, obj):
         self._deleting_completion(context, self.OBJ_TYPE_HM, obj)
 
     def hm_failed_completion(self, context, obj):
         self._failed_completion(context, self.OBJ_TYPE_HM, obj)
+
+    def l7rule_successful_completion(self, context, obj):
+        self._successful_completion(context, self.OBJ_TYPE_L7RULE, obj)
+
+    def l7rule_deleting_completion(self, context, obj):
+        self._deleting_completion(context, self.OBJ_TYPE_L7RULE, obj)
+
+    def l7rule_failed_completion(self, context, obj):
+        self._failed_completion(context, self.OBJ_TYPE_L7RULE, obj)
+
+    def l7policy_successful_completion(self, context, obj):
+        self._successful_completion(context, self.OBJ_TYPE_L7POLICY, obj)
+
+    def l7policy_deleting_completion(self, context, obj):
+        self._deleting_completion(context, self.OBJ_TYPE_L7POLICY, obj)
+
+    def l7policy_failed_completion(self, context, obj):
+        self._failed_completion(context, self.OBJ_TYPE_L7POLICY, obj)
 
     def create_port_on_subnet(self, context, subnet_id, name,
             fixed_address_count=1):
