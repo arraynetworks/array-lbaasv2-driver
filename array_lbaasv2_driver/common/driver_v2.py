@@ -37,7 +37,7 @@ OPTS = [
     cfg.StrOpt(
         'loadbalancer_scheduler_driver',
         default=(
-            'neutron_lbaas.agent_scheduler.ChanceScheduler'
+            'array_lbaasv2_driver.common.agent_scheduler.ArrayScheduler'
         ),
         help=('Driver to use for scheduling '
               'pool to a default loadbalancer agent')
@@ -186,11 +186,12 @@ class LoadBalancerManager(BaseManager):
         driver = self.driver
         self.loadbalancer = loadbalancer
         try:
+            agent = self._schedule_agent_create_service(context)
             driver.agent_rpc.update_loadbalancer(
                 context,
                 old_loadbalancer,
                 loadbalancer,
-                None
+                agent['host']
             )
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
@@ -209,8 +210,9 @@ class LoadBalancerManager(BaseManager):
         driver = self.driver
         self.loadbalancer = loadbalancer
         try:
+            agent = self._schedule_agent_create_service(context)
             driver.agent_rpc.delete_loadbalancer(
-                context, loadbalancer, None)
+                context, loadbalancer, agent['host'])
 
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
@@ -229,10 +231,11 @@ class LoadBalancerManager(BaseManager):
     def stats(self, context, loadbalancer):
         driver = self.driver
         try:
+            agent = self._schedule_agent_create_service(context)
             driver.agent_rpc.update_loadbalancer_stats(
                 context,
                 loadbalancer,
-                None
+                agent['host']
             )
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:

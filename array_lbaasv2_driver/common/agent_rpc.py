@@ -82,13 +82,14 @@ class LBaaSv2AgentRPC(object):
 
     @log_helpers.log_method_call
     def create_loadbalancer(self, context, loadbalancer, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'create_loadbalancer',
                 obj=loadbalancer
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def update_loadbalancer(
@@ -98,6 +99,7 @@ class LBaaSv2AgentRPC(object):
             loadbalancer,
             host
     ):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
@@ -105,17 +107,18 @@ class LBaaSv2AgentRPC(object):
                 old_obj=old_loadbalancer,
                 obj=loadbalancer
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def delete_loadbalancer(self, context, loadbalancer, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'delete_loadbalancer',
                 obj=loadbalancer
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def update_loadbalancer_stats(
@@ -124,26 +127,29 @@ class LBaaSv2AgentRPC(object):
             loadbalancer,
             host
     ):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'update_loadbalancer_stats',
                 obj=loadbalancer
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def create_listener(self, context, listener, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'create_listener',
                 obj=listener
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def update_listener(self, context, old_listener, listener, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
@@ -151,30 +157,33 @@ class LBaaSv2AgentRPC(object):
                 old_obj=old_listener,
                 obj=listener
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def delete_listener(self, context, listener, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'delete_listener',
                 obj=listener
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def create_pool(self, context, pool, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'create_pool',
                 obj=pool
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def update_pool(self, context, old_pool, pool, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
@@ -182,30 +191,33 @@ class LBaaSv2AgentRPC(object):
                 old_obj=old_pool,
                 obj=pool
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def delete_pool(self, context, pool, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'delete_pool',
                 obj=pool
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def create_member(self, context, member, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'create_member',
                 obj=member
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def update_member(self, context, old_member, member, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
@@ -213,27 +225,29 @@ class LBaaSv2AgentRPC(object):
                 old_obj=old_member,
                 obj=member
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def delete_member(self, context, member, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'delete_member',
                 obj=member
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def create_health_monitor(self, context, health_monitor, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'create_health_monitor',
                 obj=health_monitor
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def update_health_monitor(
@@ -243,6 +257,7 @@ class LBaaSv2AgentRPC(object):
             health_monitor,
             host
     ):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
@@ -250,30 +265,33 @@ class LBaaSv2AgentRPC(object):
                 old_obj=old_health_monitor,
                 obj=health_monitor
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def delete_health_monitor(self, context, health_monitor, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'delete_health_monitor',
                 obj=health_monitor
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def create_l7policy(self, context, l7policy, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'create_l7policy',
                 obj=l7policy
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def update_l7policy(self, context, old_l7policy, l7policy, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
@@ -281,30 +299,33 @@ class LBaaSv2AgentRPC(object):
                 old_obj=old_l7policy,
                 obj=l7policy
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def delete_l7policy(self, context, l7policy, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'delete_l7policy',
                 obj=l7policy
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def create_l7rule(self, context, l7rule, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'create_l7rule',
                 obj=l7rule
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def update_l7rule(self, context, old_l7rule, l7rule, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
@@ -312,14 +333,15 @@ class LBaaSv2AgentRPC(object):
                 old_obj=old_l7rule,
                 obj=l7rule
             ),
-            topic=self.topic)
+            topic=topic)
 
     @log_helpers.log_method_call
     def delete_l7rule(self, context, l7rule, host):
+        topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'delete_l7rule',
                 obj=l7rule
             ),
-            topic=self.topic)
+            topic=topic)
