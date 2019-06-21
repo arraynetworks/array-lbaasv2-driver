@@ -16,6 +16,8 @@ from neutron_lib import constants as n_const
 from neutron_lbaas.services.loadbalancer import data_models
 
 from array_lbaasv2_driver.common import db
+from array_lbaasv2_driver.common import utils
+from array_lbaasv2_driver.db import repository
 
 LOG = logging.getLogger(__name__)
 
@@ -72,6 +74,8 @@ class ArrayLoadBalancerCallbacks(object):
             "pool.model": data_models.Pool,
             "member.model": data_models.Member,
             "hm.model": data_models.HealthMonitor,
+            "l7policy.model": data_models.L7Policy,
+            "l7rule.model": data_models.L7Rule,
         }
 
     def _successful_completion(self, context, obj_type, obj, delete=False,
@@ -215,4 +219,28 @@ class ArrayLoadBalancerCallbacks(object):
             vlan_tag = '-1'
         ret = {'vlan_tag': str(vlan_tag)}
         return ret
+
+    def get_vapv_by_lb_id(self, context, vip_id):
+        array_db = repository.ArrayLBaaSv2Repository()
+        vapv_name = array_db.get_va_by_lb_id(context.session, vip_id)
+        if not vapv_name:
+            return None
+        ret = {'vapv_name': str(vapv_name)}
+        return ret
+
+    def generate_vapv(self, context):
+        ret = None
+        vapv_name = utils.generate_vapv(context)
+        if vapv_name:
+            ret = {'vapv_name': str(vapv_name)}
+        return ret
+
+    def create_vapv(self, context, vapv_name, lb_id, subnet_id, in_use_lb):
+        vapv = utils.create_vapv(context, vapv_name, lb_id,
+                                 subnet_id, in_use_lb)
+        return vapv
+
+    def delete_vapv(self, context, vapv_name):
+        utils.delete_vapv(context, vapv_name)
+
 

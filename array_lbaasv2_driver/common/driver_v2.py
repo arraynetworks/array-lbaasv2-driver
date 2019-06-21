@@ -149,8 +149,7 @@ class BaseManager(object):
         agent = self.driver.scheduler.schedule(
             self.driver.plugin,
             context,
-            self.loadbalancer,
-            "array"
+            self.loadbalancer.id
         )
         return agent
 
@@ -164,20 +163,23 @@ class LoadBalancerManager(BaseManager):
         driver = self.driver
         self.loadbalancer = loadbalancer
         try:
+            LOG.debug("will schedule the agent...")
             agent = self._schedule_agent_create_service(context)
 
+            LOG.debug("will invoke the agent using rpc...")
             driver.agent_rpc.create_loadbalancer(
                 context, loadbalancer, agent['host'])
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
-            LOG.error("Exception: loadbalancer create: %s" % e)
+            LOG.error("Exception: loadbalancer create: %s" % e.message)
+            LOG.error("Will set the status of LB to ERROR")
             driver.plugin.db.update_status(
                 context,
                 models.LoadBalancer,
                 loadbalancer.id,
                 plugin_constants.ERROR)
         except Exception as e:
-            LOG.error("Exception: loadbalancer create: %s" % e.message)
+            LOG.error("Exception: loadbalancer create: --%s--" % e.message)
             raise e
 
     @log_helpers.log_method_call
@@ -447,7 +449,7 @@ class L7PolicyManager(BaseManager):
         """Create an L7 policy."""
 
         self.loadbalancer = policy.listener.loadbalancer
-        self.api_dict = policy.to_dict(listener=False, rules=False)
+        self.api_dict = policy.to_dict()
         self._call_rpc(context, policy, 'create_l7policy')
 
     @log_helpers.log_method_call
@@ -460,8 +462,8 @@ class L7PolicyManager(BaseManager):
             agent_host = self._setup_crud(context, policy)
             driver.agent_rpc.update_l7policy(
                 context,
-                old_policy.to_dict(listener=False),
-                policy.to_dict(listener=False),
+                old_policy.to_dict(),
+                policy.to_dict(),
                 agent_host
             )
         except Exception as e:
@@ -473,7 +475,7 @@ class L7PolicyManager(BaseManager):
         """Delete a policy."""
 
         self.loadbalancer = policy.listener.loadbalancer
-        self.api_dict = policy.to_dict(listener=False, rules=False)
+        self.api_dict = policy.to_dict()
         self._call_rpc(context, policy, 'delete_l7policy')
 
 
@@ -485,7 +487,7 @@ class L7RuleManager(BaseManager):
         """Create an L7 rule."""
 
         self.loadbalancer = rule.policy.listener.loadbalancer
-        self.api_dict = rule.to_dict(policy=False)
+        self.api_dict = rule.to_dict()
         self._call_rpc(context, rule, 'create_l7rule')
 
     @log_helpers.log_method_call
@@ -498,8 +500,8 @@ class L7RuleManager(BaseManager):
             agent_host = self._setup_crud(context, rule)
             driver.agent_rpc.update_l7rule(
                 context,
-                old_rule.to_dict(policy=False),
-                rule.to_dict(policy=False),
+                old_rule.to_dict(),
+                rule.to_dict(),
                 agent_host
             )
         except Exception as e:
@@ -511,5 +513,5 @@ class L7RuleManager(BaseManager):
         """Delete a rule."""
 
         self.loadbalancer = rule.policy.listener.loadbalancer
-        self.api_dict = rule.to_dict(policy=False)
+        self.api_dict = rule.to_dict()
         self._call_rpc(context, rule, 'delete_l7rule')

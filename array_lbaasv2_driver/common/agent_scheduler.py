@@ -51,7 +51,8 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
             return lbaas_agent
 
     def rebind_loadbalancers(self, context, plugin, current_agent):
-        agents = self.get_agents(context, plugin, active=True)
+        # TODO: Here, it should be active array agents
+        agents = self.get_array_agent_candidates(context, plugin)
         if agents:
             reassigned_agent = agents[0]
             bindings = \
@@ -71,7 +72,7 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
 
     def get_dead_agents(self, context, plugin):
         return_agents = []
-        all_agents = self.get_agents(context, plugin, active=None)
+        all_agents = self.get_all_agents(context, plugin, active=None)
 
         for agent in all_agents:
 
@@ -82,13 +83,26 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
                     return_agents.append(agent)
         return return_agents
 
+
     def scrub_dead_agents(self, context, plugin):
         dead_agents = self.get_dead_agents(context, plugin)
         for agent in dead_agents:
             self.rebind_loadbalancers(context, plugin, agent)
 
-    def get_agents(self, context, plugin, active=None):
-        """Get an active agents."""
+    def get_array_agent_candidates(self, context, plugin):
+        active_agents = self.get_all_agents(context, plugin, active=True)
+        device_driver = "array"
+        with context.session.begin(subtransactions=True):
+            candidates = []
+            try:
+                candidates = plugin.db.get_lbaas_agent_candidates(device_driver, active_agents)
+            except Exception as ex:
+                LOG.error("Exception retrieving agent candidates for "
+                          "scheduling: {}".format(ex))
+        return candidates
+
+
+    def get_all_agents(self, context, plugin, active=None):
         with context.session.begin(subtransactions=True):
             candidates = []
             try:
@@ -99,18 +113,8 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
 
         return candidates
 
-    def get_agents_hosts(self, context, plugin):
-        """Get an active agents."""
-        with context.session.begin(subtransactions=True):
-            candidates = []
-            try:
-                candidates = plugin.db.get_lbaas_agents(context)
-            except Exception as ex:
-                LOG.error("Exception retrieving agent candidates for "
-                          "scheduling: {}".format(ex))
-        return candidates
 
-    def schedule(self, plugin, context, loadbalancer_id, env=None):
+    def schedule(self, plugin, context, loadbalancer_id):
         """Schedule the loadbalancer to an active loadbalancer agent.
 
         If there is no enabled agent hosting it.
@@ -134,42 +138,22 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
 
             # There is no existing loadbalancer agent binding.
             # Find all active agent candidates in this env.
-            candidates = self.get_agents(
+            candidates = self.get_array_agent_candidates(
                 context,
-                plugin,
-                active=True
+                plugin
             )
 
             LOG.debug("candidate agents: %s", candidates)
             if len(candidates) == 0:
-                LOG.error('No array lbaas agents are active for env %s' % env)
+                LOG.error('No array lbaas agents are active.')
                 raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
                     loadbalancer_id=loadbalancer.id)
 
-            # We have active candidates to choose from.
-            # Qualify them by tenant affinity and then capacity.
-            chosen_agent = None
-
-            for candidate in candidates:
-                # Do we already have this tenant assigned to this
-                # agent candidate? If we do and it has capacity
-                # then assign this loadbalancer to this agent.
-                assigned_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
-                    context, candidate['id'])
-                for assigned_lb in assigned_lbs:
-                    if loadbalancer.tenant_id == assigned_lb.tenant_id:
-                        chosen_agent = candidate
-                        break
-
-            # If we don't have an agent with capacity associated
-            # with our tenant_id, let's pick an agent based on
-            # the group with the lowest capacity score.
-            if not chosen_agent:
-                pass
+            chosen_agent = candidates[0]
 
             # If there are no agents with available capacity, raise exception
             if not chosen_agent:
-                LOG.warn('No capacity left on any agents in env: %s' % env)
+                LOG.warn('No capacity left on any agents')
                 raise lbaas_agentschedulerv2.NoEligibleLbaasAgent(
                     loadbalancer_id=loadbalancer.id)
 
