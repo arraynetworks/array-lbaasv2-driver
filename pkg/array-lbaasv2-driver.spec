@@ -30,6 +30,7 @@ rm -f requirements.txt
 %license LICENSE
 %{python2_sitelib}/array_lbaasv2_driver
 %{python2_sitelib}/*.egg-info
+/usr/bin/array_lbaas_init_db
 
 %changelog
 * Thu Oct 25 2018 jarod.w <wangli2@arraynetworks.com.cn> 1.0.0-1
