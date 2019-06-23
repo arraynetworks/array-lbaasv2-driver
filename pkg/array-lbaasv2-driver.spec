@@ -7,7 +7,7 @@ Summary:        Array lbaas driver
 
 License:        ASL 2.0
 URL:            https://github.com/arraynetworks/array-lbaasv2-driver
-Source0:        https://github.com/arraynetworks/array-lbaasv2-driver/%{name}-%{version}.tar.gz
+Source0:        https://github.com/arraynetworks/array-lbaasv2-driver/%{name}.tar.gz
 BuildArch:      noarch
 
 %description
