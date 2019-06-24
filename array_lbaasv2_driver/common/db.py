@@ -17,6 +17,7 @@ import time
 from oslo_log import log as logging
 from oslo_config import cfg
 
+from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import models
 
 CMCC_DEFAULT_LEVEL = 1
@@ -46,14 +47,10 @@ DB_OPTS = [
 
 cfg.CONF.register_opts(DB_OPTS, "arraynetworks")
 
-def _get_binding_level(context, port_id, level):
+def _get_binding_level(context, port_id, level, host):
     result = None
     host = None
     if port_id:
-        host = cfg.CONF.arraynetworks.array_request_vlan_hostname
-        if not host:
-            LOG.error("Unable to get host by port_id %(port_id)s", {'port_id': port_id})
-            return result
         LOG.debug("For port %(port_id)s, got binding host %(host)s",
                 {'port_id': port_id, 'host': host})
         result = (context.session.query(models.PortBindingLevel).
@@ -103,8 +100,11 @@ def get_vlan_id_by_port_cmcc(context, port_id):
                   "%(retries)s attempts") % {'retries': retries}
             LOG.error(msg)
             return None
-
-        binding_level = _get_binding_level(context, port_id, CMCC_DEFAULT_LEVEL)
+        host = cfg.CONF.arraynetworks.array_request_vlan_hostname
+        if not host:
+            LOG.error("Unable to get host by port_id %(port_id)s", {'port_id': port_id})
+            return None
+        binding_level = _get_binding_level(context, port_id, CMCC_DEFAULT_LEVEL, host)
         if not binding_level:
             LOG.error("Unable to get binding_level using %(port_id)s", {'port_id': port_id})
             time.sleep(seconds_time)
@@ -122,3 +122,50 @@ def get_vlan_id_by_port_cmcc(context, port_id):
 
     return vlan_id
 
+
+def get_segment_id_by_port_huawei(context, port_id, agent_hosts):
+    segment_id = None
+
+    attempts = 0
+    seconds_time = int(cfg.CONF.arraynetworks.array_request_vlan_interval) / 1000
+    retries = int(cfg.CONF.arraynetworks.array_request_vlan_max_retries)
+    while True:
+        if attempts < retries:
+            attempts += 1
+        elif retries == 0:
+            attempts = 0
+        else:
+            msg = ("Unable to get the vlan id. Exiting after "
+                  "%(retries)s attempts") % {'retries': retries}
+            LOG.error(msg)
+            return None
+        segment = _get_segment(context, port_id, agent_hosts)
+        if not segment:
+            LOG.error("Unable to get network_segment using port_id(%s) and agent_hosts(%s)" % (port_id, agent_hosts))
+            time.sleep(seconds_time)
+            continue
+        else:
+            segment_id = str(segment.segmentation_id)
+            break
+        return segment_id
+
+
+
+def _get_segment(context, port_id, agent_hosts):
+    try:
+        segment = None
+        if agent_hosts:
+            for host_id in agent_hosts:
+                levels = db.get_binding_levels(context.session, port_id, host_id)
+                if levels:
+                    LOG.debug('XXXX levels: %s binding host_id: %s' % (levels, host_id))
+                    for level in levels:
+                        segment = db.get_segment_by_id(context.session, level.segment_id)
+                        LOG.debug('XXXX vlanx to vlan segment id %s: segment %s'
+                                  % (level.segment_id, segment))
+                        if segment:
+                            break
+        return segment
+    except Exception as exc:
+        LOG.error(
+            "could not get segment id by port %s and host %s, %s" % (port_id, agent_hosts, exc.message))

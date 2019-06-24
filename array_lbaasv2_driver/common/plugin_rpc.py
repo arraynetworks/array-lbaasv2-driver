@@ -220,6 +220,18 @@ class ArrayLoadBalancerCallbacks(object):
         ret = {'vlan_tag': str(vlan_tag)}
         return ret
 
+    def get_vlan_id_by_port_huawei(self, context, port_id):
+        agent_hosts = []
+        candidates = self.driver.plugin.db.get_lbaas_agents(context, active=True)
+        for candidate in candidates:
+            agent_hosts.append(candidate['host'])
+
+        vlan_tag = db.get_segment_id_by_port_huawei(context, port_id, agent_hosts)
+        if not vlan_tag:
+            vlan_tag = '-1'
+        ret = {'vlan_tag': str(vlan_tag)}
+        return ret
+
     def get_vapv_by_lb_id(self, context, vip_id):
         array_db = repository.ArrayLBaaSv2Repository()
         vapv_name = array_db.get_va_by_lb_id(context.session, vip_id)
