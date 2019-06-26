@@ -322,8 +322,8 @@ class PoolManager(BaseManager):
             agent_host = self._setup_crud(context, pool)
             driver.agent_rpc.update_pool(
                 context,
-                self._get_pool_dict(old_pool),
-                self._get_pool_dict(pool),
+                old_pool.to_dict(),
+                pool.to_dict(),
                 agent_host
             )
         except Exception as e:
