@@ -22,6 +22,7 @@ from neutron.common import rpc as n_rpc
 from neutron.db import agents_db
 from neutron.plugins.common import constants as plugin_constants
 from neutron_lib import constants as lb_const
+from neutron_lib.api.definitions import portbindings
 
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
@@ -169,6 +170,19 @@ class LoadBalancerManager(BaseManager):
             LOG.debug("will invoke the agent using rpc...")
             driver.agent_rpc.create_loadbalancer(
                 context, loadbalancer, agent['host'])
+
+            port_data = {
+                'admin_state_up': True,
+            }
+            port_data[portbindings.HOST_ID] = agent['host']
+            port_data[portbindings.VNIC_TYPE] = "normal"
+            port_data[portbindings.PROFILE] = {}
+            driver.plugin.db._core_plugin.update_port(
+                context,
+                loadbalancer.vip_port_id,
+                {'port': port_data}
+            )
+
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
             LOG.error("Exception: loadbalancer create: %s" % e.message)

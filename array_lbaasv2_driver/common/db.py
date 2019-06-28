@@ -19,6 +19,7 @@ from oslo_config import cfg
 
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import models
+from neutron.db import segments_db
 
 CMCC_DEFAULT_LEVEL = 1
 CMCC_DEFAULT_NETWORK_TYPE = 'vlan'
@@ -145,7 +146,7 @@ def get_segment_id_by_port_huawei(context, port_id, agent_hosts):
             time.sleep(seconds_time)
             continue
         else:
-            segment_id = str(segment.segmentation_id)
+            segment_id = str(segment['segmentation_id'])
             break
         return segment_id
 
@@ -156,11 +157,11 @@ def _get_segment(context, port_id, agent_hosts):
         segment = None
         if agent_hosts:
             for host_id in agent_hosts:
-                levels = db.get_binding_levels(context.session, port_id, host_id)
+                levels = db.get_binding_levels(context, port_id, host_id)
                 if levels:
                     LOG.debug('XXXX levels: %s binding host_id: %s' % (levels, host_id))
                     for level in levels:
-                        segment = db.get_segment_by_id(context.session, level.segment_id)
+                        segment = segments_db.get_segment_by_id(context, level.segment_id)
                         LOG.debug('XXXX vlanx to vlan segment id %s: segment %s'
                                   % (level.segment_id, segment))
                         if segment:
