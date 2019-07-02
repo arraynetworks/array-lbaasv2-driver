@@ -235,6 +235,7 @@ class LoadBalancerManager(BaseManager):
             LOG.error("Exception: loadbalancer delete: %s" % e)
             driver.plugin.db.delete_loadbalancer(context, loadbalancer.id)
         except Exception as e:
+            driver.plugin.db.delete_loadbalancer(context, loadbalancer.id)
             LOG.error("Exception: loadbalancer delete: %s" % e)
             raise e
 

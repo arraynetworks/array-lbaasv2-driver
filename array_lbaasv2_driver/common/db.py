@@ -136,19 +136,20 @@ def get_segment_id_by_port_huawei(context, port_id, agent_hosts):
         elif retries == 0:
             attempts = 0
         else:
-            msg = ("Unable to get the vlan id. Exiting after "
+            msg = ("array db: Unable to get the vlan id. Exiting after "
                   "%(retries)s attempts") % {'retries': retries}
             LOG.error(msg)
             return None
         segment = _get_segment(context, port_id, agent_hosts)
         if not segment:
-            LOG.error("Unable to get network_segment using port_id(%s) and agent_hosts(%s)" % (port_id, agent_hosts))
+            LOG.error("array db: Unable to get network_segment using port_id(%s) and agent_hosts(%s)" % (port_id, agent_hosts))
             time.sleep(seconds_time)
             continue
         else:
             segment_id = str(segment['segmentation_id'])
             break
-        return segment_id
+    LOG.debug("array db: segment_id is %s" % segment_id)
+    return segment_id
 
 
 
@@ -159,14 +160,14 @@ def _get_segment(context, port_id, agent_hosts):
             for host_id in agent_hosts:
                 levels = db.get_binding_levels(context, port_id, host_id)
                 if levels:
-                    LOG.debug('XXXX levels: %s binding host_id: %s' % (levels, host_id))
+                    LOG.debug('array db: levels: %s binding host_id: %s' % (levels, host_id))
                     for level in levels:
                         segment = segments_db.get_segment_by_id(context, level.segment_id)
-                        LOG.debug('XXXX vlanx to vlan segment id %s: segment %s'
+                        LOG.debug('array db: segment id %s: segment %s'
                                   % (level.segment_id, segment))
                         if segment:
                             break
         return segment
     except Exception as exc:
         LOG.error(
-            "could not get segment id by port %s and host %s, %s" % (port_id, agent_hosts, exc.message))
+                "array db: could not get segment id by port %s and host %s, %s" % (port_id, agent_hosts, exc.message))
