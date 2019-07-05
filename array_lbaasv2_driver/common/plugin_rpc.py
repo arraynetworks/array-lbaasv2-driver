@@ -14,6 +14,7 @@ import logging
 
 from neutron_lib import constants as n_const
 from neutron_lbaas.services.loadbalancer import data_models
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_constants
 from neutron_lbaas.db.loadbalancer import models
 
@@ -180,8 +181,8 @@ class ArrayLoadBalancerCallbacks(object):
     def l7policy_failed_completion(self, context, obj):
         self._failed_completion(context, self.OBJ_TYPE_L7POLICY, obj)
 
-    def create_port_on_subnet(self, context, subnet_id, name,
-            fixed_address_count=1):
+    def create_port_on_subnet(self, context, subnet_id, name, host,
+        fixed_address_count=1):
         subnet = self.driver.plugin.db._core_plugin.get_subnet(context, subnet_id)
         fixed_ip = {'subnet_id': subnet['id']}
         if fixed_address_count > 1:
@@ -197,9 +198,12 @@ class ArrayLoadBalancerCallbacks(object):
             'mac_address': n_const.ATTR_NOT_SPECIFIED,
             'admin_state_up': True,
             'device_id': '',
-            'device_owner': '',
+            'device_owner': n_const.DEVICE_OWNER_LOADBALANCERV2,
             'fixed_ips': fixed_ips
         }
+        port_data[portbindings.HOST_ID] = host
+        port_data[portbindings.VNIC_TYPE] = "normal"
+        port_data[portbindings.PROFILE] = {}
         return self.driver.plugin.db._core_plugin.create_port(context, {'port': port_data})
 
     def get_subnet(self, context, subnet_id):
@@ -236,7 +240,14 @@ class ArrayLoadBalancerCallbacks(object):
 
     def get_vapv_by_lb_id(self, context, vip_id):
         array_db = repository.ArrayLBaaSv2Repository()
-        vapv_name = array_db.get_va_by_lb_id(context.session, vip_id)
+        vapv = array_db.get(context.session, lb_id=vip_id)
+        if not vapv:
+            return None
+        return vapv
+
+    def get_va_name_by_lb_id(self, context, vip_id):
+        array_db = repository.ArrayLBaaSv2Repository()
+        vapv_name = array_db.get_va_name_by_lb_id(context.session, vip_id)
         if not vapv_name:
             return None
         ret = {'vapv_name': str(vapv_name)}
@@ -249,13 +260,30 @@ class ArrayLoadBalancerCallbacks(object):
             ret = {'vapv_name': str(vapv_name)}
         return ret
 
-    def create_vapv(self, context, vapv_name, lb_id, subnet_id, in_use_lb):
+    def create_vapv(self, context, vapv_name, lb_id, subnet_id,
+        in_use_lb, pri_port_id, sec_port_id):
         vapv = utils.create_vapv(context, vapv_name, lb_id,
-                                 subnet_id, in_use_lb)
+            subnet_id, in_use_lb, pri_port_id, sec_port_id)
         return vapv
 
     def delete_vapv(self, context, vapv_name):
         utils.delete_vapv(context, vapv_name)
+
+    def delete_port(self, context, port_id=None, mac_address=None):
+        """Delete port."""
+        if port_id:
+            self.driver.plugin.db._core_plugin.delete_port(context, port_id)
+        elif mac_address:
+            filters = {'mac_address': [mac_address]}
+            ports = self.driver.plugin.db._core_plugin.get_ports(
+                context,
+                filters=filters
+            )
+            for port in ports:
+                self.driver.plugin.db._core_plugin.delete_port(
+                    context,
+                    port['id']
+                )
 
     def update_member_status(self, context, member_id=None,
         provisioning_status=None, operating_status=None):

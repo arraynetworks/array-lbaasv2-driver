@@ -52,13 +52,15 @@ def generate_vapv(context):
         return diff_vas[0]
     return None
 
-def create_vapv(context, vapv_name, lb_id, subnet_id, in_use_lb):
+
+def create_vapv(context, vapv_name, lb_id, subnet_id, in_use_lb,
+                pri_port_id, sec_port_id):
     array_db = repository.ArrayLBaaSv2Repository()
     return array_db.create(context.session,
-                           in_use_lb = in_use_lb,
-                           lb_id = lb_id,
-                           subnet_id = subnet_id,
-                           hostname = vapv_name)
+        in_use_lb=in_use_lb, lb_id=lb_id,
+        subnet_id=subnet_id, hostname=vapv_name,
+        sec_port_id=sec_port_id, pri_port_id=pri_port_id)
+
 
 def delete_vapv(context, vapv_name):
     array_db = repository.ArrayLBaaSv2Repository()

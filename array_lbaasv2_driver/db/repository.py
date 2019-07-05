@@ -82,7 +82,7 @@ class BaseRepository(object):
 class ArrayLBaaSv2Repository(BaseRepository):
     model_class = models.ArrayLBaaSv2
 
-    def get_va_by_lb_id(self, session, lb_id):
+    def get_va_name_by_lb_id(self, session, lb_id):
         vapv = session.query(self.model_class).filter_by(lb_id=lb_id).first()
         if vapv:
             return vapv.hostname
