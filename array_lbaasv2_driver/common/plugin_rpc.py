@@ -14,6 +14,8 @@ import logging
 
 from neutron_lib import constants as n_const
 from neutron_lbaas.services.loadbalancer import data_models
+from neutron_lib import constants as n_constants
+from neutron_lbaas.db.loadbalancer import models
 
 from array_lbaasv2_driver.common import db
 from array_lbaasv2_driver.common import utils
@@ -255,4 +257,53 @@ class ArrayLoadBalancerCallbacks(object):
     def delete_vapv(self, context, vapv_name):
         utils.delete_vapv(context, vapv_name)
 
+    def update_member_status(self, context, member_id=None,
+        provisioning_status=None, operating_status=None):
+        LOG.debug("-----enter update_member_status-----%s: %s" % (member_id, operating_status))
+        with context.session.begin(subtransactions=True):
+            try:
+                member = self.driver.plugin.db.get_pool_member(
+                    context,
+                    member_id
+                )
+                if (member.provisioning_status !=
+                        n_constants.PENDING_DELETE):
+                    LOG.debug("----------will update_status--------------")
+                    self.driver.plugin.db.update_status(
+                        context,
+                        models.MemberV2,
+                        member_id,
+                        provisioning_status,
+                        operating_status
+                    )
+            except Exception as e:
+                LOG.error('Exception: update_member_status: %s',
+                          e.message)
+
+    def get_members_status_on_agent(self, context, agent_host_name):
+        lb_members = {}
+        plugin = self.driver.plugin
+        with context.session.begin(subtransactions=True):
+            self.driver.array.scheduler.scrub_dead_agents(context, plugin)
+            active_agents = self.driver.array.scheduler.get_all_agents(
+                context,
+                plugin,
+                active=True
+            )
+            for agent in active_agents:
+                if agent['host'] == agent_host_name:
+                    agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
+                        context,
+                        agent['id']
+                    )
+                    for lb in agent_lbs:
+                        lb_dict = {}
+                        if lb.pools:
+                            for pool in lb.pools:
+                                if pool.members and pool.healthmonitor:
+                                    for mem in pool.members:
+                                        lb_dict[mem.id] = mem.operating_status
+                        if lb_dict:
+                            lb_members[lb.id] = lb_dict
+            return lb_members
 
