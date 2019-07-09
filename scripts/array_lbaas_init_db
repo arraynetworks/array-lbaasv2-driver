@@ -19,7 +19,7 @@ import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from array_lbaasv2_driver.db import models
+import importlib
 
 def help(msg=None):
     if msg:
@@ -27,7 +27,7 @@ def help(msg=None):
     print """
 Usage:
 
-# array_lbaas_init_db <ACTION> [--db=<DB_PATH>] [OTHER_PARAMETERS]
+# array_lbaas_init_db <ACTION> [--db=<DB_PATH>] [--env=<Environment>] [OTHER_PARAMETERS]
 
 ACTIONS:
     list        - lists all array amphora
@@ -69,18 +69,26 @@ def main(argv):
             sys.exit(1)
 
         db_path = args['db']
+        environment = args['env']
         # Execute requested operation...
+        module_name = "array_lbaasv2_driver.db.models"
+        if environment:
+            module_name = "array_lbaasv2_driver_%s.db.models" % environment
+        model_mod = importlib.import_module(module_name)
+        basetable = getattr(model_mod, "BaseTable")
+        arraylbaasv2 = getattr(model_mod, "ArrayLBaaSv2")
         if command == "list":
             engine = create_engine(db_path, pool_recycle=300)
             session_maker = sessionmaker(bind=engine)
             db = session_maker()
-            db.query(models.ArrayLBaaSv2).all()
+            db.query(arraylbaasv2).all()
         elif command == "drop":
             print "\nDone!\n"
         elif command == "initialize":
+            print "will init ...."
             # Create the database table to hold vapv instance
             engine = create_engine(db_path, pool_recycle=300)
-            models.BaseTable.metadata.create_all(engine)
+            basetable.metadata.create_all(engine)
             print "\nDone!\n"
         else:
             help()
