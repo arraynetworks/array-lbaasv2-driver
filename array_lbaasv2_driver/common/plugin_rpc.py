@@ -312,11 +312,10 @@ class ArrayLoadBalancerCallbacks(object):
         lb_members = {}
         plugin = self.driver.plugin
         with context.session.begin(subtransactions=True):
-            self.driver.array.scheduler.scrub_dead_agents(context, plugin)
-            active_agents = self.driver.array.scheduler.get_all_agents(
+            active_agents = self.driver.array.scheduler.get_array_agent_candidates(
                 context,
                 plugin,
-                active=True
+                self.driver.array.environment
             )
             for agent in active_agents:
                 if agent['host'] == agent_host_name:

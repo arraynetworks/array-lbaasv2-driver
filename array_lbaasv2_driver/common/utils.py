@@ -26,7 +26,10 @@ ARRAY_OPTS = [
     )
 ]
 
-cfg.CONF.register_opts(ARRAY_OPTS, "arraynetworks")
+try:
+    cfg.CONF.register_opts(ARRAY_OPTS, "arraynetworks")
+except Exception as e:
+    LOG.debug("Failed to register opt(array_interface), maybe has been registered.")
 
 vapv_pool = []
 

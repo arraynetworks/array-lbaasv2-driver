@@ -45,13 +45,16 @@ OPTS = [
     )
 ]
 
-cfg.CONF.register_opts(OPTS)
+try:
+    cfg.CONF.register_opts(OPTS)
+except Exception as e:
+    LOG.debug("Failed to register opt(loadbalancer_scheduler_driver), maybe has been registered.")
 
 
 class ArrayDriverV2(object):
     """Array Networks LBaaSv2 Driver."""
 
-    def __init__(self, plugin=None, driver = None):
+    def __init__(self, plugin=None, driver = None,  environment=None):
         """Driver initialization."""
         if not plugin or not driver:
             LOG.error('Required LBaaS Driver and Core Driver Missing')
@@ -59,6 +62,7 @@ class ArrayDriverV2(object):
 
         self.plugin = plugin
         self.conn = None
+        self.environment = environment
 
         self.loadbalancer = LoadBalancerManager(self)
         self.listener = ListenerManager(self)
@@ -69,8 +73,10 @@ class ArrayDriverV2(object):
         self.l7rule = L7RuleManager(self)
 
         # what scheduler to use for pool selection
+        loadbalancer_scheduler_driver = "array_lbaasv2_driver.common.agent_scheduler.ArrayScheduler"
         self.scheduler = importutils.import_object(
-            cfg.CONF.loadbalancer_scheduler_driver)
+            loadbalancer_scheduler_driver
+        )
 
         self.agent_rpc = agent_rpc.LBaaSv2AgentRPC(self)
 
@@ -90,9 +96,10 @@ class ArrayDriverV2(object):
             return
 
         self.conn = n_rpc.create_connection()
-        self.conn.create_consumer(constants_v2.TOPIC_PROCESS_ON_HOST_V2,
-                                  self.agent_endpoints,
-                                  fanout=False)
+        topic = constants_v2.TOPIC_PROCESS_ON_HOST_V2
+        if self.environment:
+            topic = topic + '_' + self.environment
+        self.conn.create_consumer(topic, self.agent_endpoints, fanout=False)
         return self.conn.consume_in_threads()
 
 
@@ -146,11 +153,17 @@ class BaseManager(object):
         :param context: auth context for performing crud operation
         :returns: agent object
         '''
+        self.driver.scheduler.scrub_dead_agents(
+            context,
+            self.driver.plugin,
+            self.driver.environment
+        )
 
         agent = self.driver.scheduler.schedule(
-            self.driver.plugin,
             context,
-            self.loadbalancer.id
+            self.driver.plugin,
+            self.loadbalancer.id,
+            self.driver.environment
         )
         return agent
 

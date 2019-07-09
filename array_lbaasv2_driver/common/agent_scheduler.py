@@ -12,6 +12,8 @@
 # limitations under the License.
 #
 
+import json
+
 from oslo_log import log as logging
 
 from neutron_lbaas import agent_scheduler
@@ -51,9 +53,9 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
 
             return lbaas_agent
 
-    def rebind_loadbalancers(self, context, plugin, current_agent):
+    def rebind_loadbalancers(self, context, plugin, current_agent, environment=None):
         # TODO: Here, it should be active array agents
-        agents = self.get_array_agent_candidates(context, plugin)
+        agents = self.get_array_agent_candidates(context, plugin, environment)
         if agents:
             reassigned_agent = agents[0]
             bindings = \
@@ -85,22 +87,43 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
         return return_agents
 
 
-    def scrub_dead_agents(self, context, plugin):
+    def scrub_dead_agents(self, context, plugin, environment=None):
         dead_agents = self.get_dead_agents(context, plugin)
         for agent in dead_agents:
-            self.rebind_loadbalancers(context, plugin, agent)
+            self.rebind_loadbalancers(context, plugin, agent, environment)
 
-    def get_array_agent_candidates(self, context, plugin):
+
+    def deserialize_agent_configurations(self, agent_conf):
+        if not isinstance(agent_conf, dict):
+            try:
+                agent_conf = json.loads(agent_conf)
+            except ValueError as ve:
+                LOG.error("Can't decode JSON %s : %s"
+                          % (agent_conf, ve.message))
+                return {}
+        return agent_conf
+
+
+    def get_array_agent_candidates(self, context, plugin, environment):
         active_agents = self.get_all_agents(context, plugin, active=True)
         device_driver = "array"
         with context.session.begin(subtransactions=True):
-            candidates = []
+            return_candidates = []
             try:
                 candidates = plugin.db.get_lbaas_agent_candidates(device_driver, active_agents)
+                for candidate in candidates:
+                    ac = self.deserialize_agent_configurations(
+                        candidate['configurations'])
+                    if 'environment' in ac:
+                        if environment and ac['environment'] == environment:
+                            return_candidates.append(candidate)
+                    else:
+                        if not environment:
+                            return_candidates.append(candidate)
             except Exception as ex:
                 LOG.error("Exception retrieving agent candidates for "
                           "scheduling: {}".format(ex))
-        return candidates
+        return return_candidates
 
 
     def get_all_agents(self, context, plugin, active=None):
@@ -115,7 +138,7 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
         return candidates
 
 
-    def schedule(self, plugin, context, loadbalancer_id):
+    def schedule(self, context, plugin, loadbalancer_id, environment=None):
         """Schedule the loadbalancer to an active loadbalancer agent.
 
         If there is no enabled agent hosting it.
@@ -141,7 +164,8 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
             # Find all active agent candidates in this env.
             candidates = self.get_array_agent_candidates(
                 context,
-                plugin
+                plugin,
+                environment
             )
 
             LOG.debug("candidate agents: %s", candidates)

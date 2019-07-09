@@ -46,7 +46,10 @@ DB_OPTS = [
     )
 ]
 
-cfg.CONF.register_opts(DB_OPTS, "arraynetworks")
+try:
+    cfg.CONF.register_opts(DB_OPTS, "arraynetworks")
+except Exception as e:
+    LOG.debug("Failed to register opts related with reading DB, maybe have been registered.")
 
 def _get_binding_level(context, port_id, level, host):
     result = None

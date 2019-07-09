@@ -25,7 +25,7 @@ LOG = logging.getLogger(__name__)
 
 class ArrayLBaaSV2Driver(driver_base.LoadBalancerBaseDriver):
 
-    def __init__(self, plugin):
+    def __init__(self, plugin, environment = None):
         super(ArrayLBaaSV2Driver, self).__init__(plugin)
 
         self.load_balancer = LoadBalancerManager(self)
@@ -39,7 +39,7 @@ class ArrayLBaaSV2Driver(driver_base.LoadBalancerBaseDriver):
         LOG.debug("ArrayLBaaSV2Driver: initializing, version=%s, impl=%s"
                   % (VERSION, array_lbaasv2_driver.__version__))
 
-        self.array = ArrayDriverV2(plugin, self)
+        self.array = ArrayDriverV2(plugin, self, environment)
 
 
 class LoadBalancerManager(driver_base.BaseLoadBalancerManager):

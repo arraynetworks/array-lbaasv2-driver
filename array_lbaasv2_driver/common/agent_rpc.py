@@ -37,10 +37,12 @@ class LBaaSv2AgentRPC(object):
 
     def __init__(self, driver=None):
         self.driver = driver
-        self.topic = constants_v2.TOPIC_LOADBALANCER_AGENT_V2
         self._create_rpc_publisher()
 
     def _create_rpc_publisher(self):
+        self.topic = constants_v2.TOPIC_LOADBALANCER_AGENT_V2
+        if self.driver.environment:
+            self.topic = self.topic + "_" + self.driver.environment
         target = messaging.Target(topic=self.topic,
                                   version=constants_v2.BASE_RPC_API_VERSION)
         self._client = rpc.get_client(target,
