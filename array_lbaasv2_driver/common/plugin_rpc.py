@@ -285,6 +285,23 @@ class ArrayLoadBalancerCallbacks(object):
                     port['id']
                 )
 
+    def delete_port_by_name(self, context, port_name=None):
+        """Delete port by name."""
+        if port_name:
+            filters = {'name': [port_name]}
+            try:
+                ports = self.driver.plugin.db._core_plugin.get_ports(
+                    context,
+                    filters=filters
+                )
+                for port in ports:
+                    self.driver.plugin.db._core_plugin.delete_port(
+                        context,
+                        port['id']
+                    )
+            except Exception as e:
+                LOG.error("failed to delete port: %s", e.message)
+
     def update_member_status(self, context, member_id=None,
         provisioning_status=None, operating_status=None):
         LOG.debug("-----enter update_member_status-----%s: %s" % (member_id, operating_status))
