@@ -69,3 +69,12 @@ def delete_vapv(context, vapv_name):
     array_db = repository.ArrayLBaaSv2Repository()
     array_db.delete(context.session, hostname=vapv_name)
 
+def init_internal_ip_pool(context):
+    array_db = repository.ArrayIPPoolsRepository()
+    # pool = array_db.exists(context.session, 1)
+    # if pool:
+    #     return
+    nums = range(0, 256)
+    for num in nums:
+        internal_ip = "3.1." + str(num) + ".0"
+        array_db.create(context.session, inter_ip=internal_ip, used=False)

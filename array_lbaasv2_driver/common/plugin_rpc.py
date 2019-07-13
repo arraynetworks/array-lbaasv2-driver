@@ -21,6 +21,7 @@ from neutron_lbaas.db.loadbalancer import models
 from array_lbaasv2_driver.common import db
 from array_lbaasv2_driver.common import utils
 from array_lbaasv2_driver.db import repository
+from oslo_config import cfg
 
 LOG = logging.getLogger(__name__)
 
@@ -80,6 +81,9 @@ class ArrayLoadBalancerCallbacks(object):
             "l7policy.model": data_models.L7Policy,
             "l7rule.model": data_models.L7Rule,
         }
+        self.interfaces = self.get_interfaces()
+        self.next_interface = self.createCounter(len(self.interfaces))
+        self.next_vlan_tag = self.createCounter(256)  #need to be replaced by huawei vlan tag
 
     def _successful_completion(self, context, obj_type, obj, delete=False,
             lb_create=False):
@@ -232,7 +236,8 @@ class ArrayLoadBalancerCallbacks(object):
         for candidate in candidates:
             agent_hosts.append(candidate['host'])
 
-        vlan_tag = db.get_segment_id_by_port_huawei(context, port_id, agent_hosts)
+        # vlan_tag = db.get_segment_id_by_port_huawei(context, port_id, agent_hosts)
+        vlan_tag = self.next_vlan_tag()  #need to be replace by the previous line of code
         if not vlan_tag:
             vlan_tag = '-1'
         ret = {'vlan_tag': str(vlan_tag)}
@@ -351,3 +356,58 @@ class ArrayLoadBalancerCallbacks(object):
                             lb_members[lb.id] = lb_dict
             return lb_members
 
+    def get_cluster_id_by_subnet_id(self, context, subnet_id):
+        array_db = repository.ArrayLBaaSv2Repository()
+        cluster_id = array_db.get_clusterids_by_subnet(context.session, subnet_id)
+        if not cluster_id:
+            return None
+        return cluster_id
+
+    def get_available_internal_ip(self, context, seg_name, seg_ip):
+        array_db = repository.ArrayIPPoolsRepository()
+        if seg_name and seg_ip:
+            ip_pool = array_db.get_one_available_entry(context.session, seg_name, seg_ip)
+            if ip_pool:
+                array_db.update(context.session, ip_pool.id,
+                    seg_name = seg_name, seg_ip = seg_ip,
+                    inter_ip = ip_pool.inter_ip, used = True)
+                return ip_pool.inter_ip
+            else:
+                return None
+        else:
+            return None
+
+    def get_internal_ip_by_lb(self, context, seg_name, seg_ip):
+        array_db = repository.ArrayIPPoolsRepository()
+        if seg_name and seg_ip:
+            internal_ip = array_db.get_used_internal_ip(context.session, seg_name, seg_ip)
+            if internal_ip:
+                return internal_ip
+            else:
+                return None
+        else:
+            return None
+
+    def createCounter(self, x):
+        f = [0]
+        def increase():
+            f[0] = f[0] + 1
+            if f[0] == x + 1:
+               f[0] = 1
+            return f[0]
+        return increase
+
+    def get_interfaces(self):
+        interfaces = cfg.CONF.arraynetworks.array_interfaces
+        if interfaces:
+            LOG.debug("get the interfaces(%s) from configuration", interfaces)
+            return interfaces.split(",")
+        else:
+            return []
+
+    def get_interface(self, context):
+        if len(self.interfaces) > 0:
+            return self.interfaces[self.next_interface() - 1]
+        else:
+            LOG.error("Failed to get interface from interfaces(%s)", self.interfaces)
+            return None

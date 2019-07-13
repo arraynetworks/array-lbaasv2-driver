@@ -31,6 +31,11 @@ from array_lbaasv2_driver.common import plugin_rpc
 from array_lbaasv2_driver.common import agent_rpc
 from array_lbaasv2_driver.common import constants_v2
 from array_lbaasv2_driver.common import exceptions as array_exc
+from array_lbaasv2_driver.common import utils
+try:
+    from neutron import context
+except ImportError as CriticalError:
+    from neutron_lib import context
 
 LOG = logging.getLogger(__name__)
 
@@ -89,6 +94,9 @@ class ArrayDriverV2(object):
             {lb_const.AGENT_TYPE_LOADBALANCER: self.agent_rpc})
 
         self.start_rpc_listeners()
+        self.context = context.get_admin_context()
+        utils.init_internal_ip_pool(self.context)
+
 
     def start_rpc_listeners(self):
         # other agent based plugin driver might already set callbacks on plugin
