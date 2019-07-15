@@ -69,7 +69,9 @@ def main(argv):
             sys.exit(1)
 
         db_path = args['db']
-        environment = args['env']
+        environment = ""
+        if args.has_key('env'):
+            environment = args['env']
         # Execute requested operation...
         module_name = "array_lbaasv2_driver.db.models"
         if environment:

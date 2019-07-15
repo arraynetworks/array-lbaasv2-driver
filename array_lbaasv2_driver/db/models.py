@@ -75,6 +75,7 @@ class ArrayAPVIPPOOL(BaseTable, HAS_ID, HAS_TENANT):
     seg_ip = sa.Column(sa.String(36), nullable=True)
     inter_ip = sa.Column(sa.String(36), nullable=False)
     used = sa.Column(sa.Boolean, default=False, nullable=False)
+    ipv4 = sa.Column(sa.Boolean, default=True, nullable=False)
 
     def to_dict(self, **kwargs):
         ret = {}

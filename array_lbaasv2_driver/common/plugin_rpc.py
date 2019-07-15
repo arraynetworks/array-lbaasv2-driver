@@ -83,7 +83,7 @@ class ArrayLoadBalancerCallbacks(object):
         }
         self.interfaces = self.get_interfaces()
         self.next_interface = self.createCounter(len(self.interfaces))
-        self.next_vlan_tag = self.createCounter(256)  #need to be replaced by huawei vlan tag
+        # self.next_vlan_tag = self.createCounter(256)  #need to be replaced by huawei vlan tag
 
     def _successful_completion(self, context, obj_type, obj, delete=False,
             lb_create=False):
@@ -237,7 +237,7 @@ class ArrayLoadBalancerCallbacks(object):
             agent_hosts.append(candidate['host'])
 
         # vlan_tag = db.get_segment_id_by_port_huawei(context, port_id, agent_hosts)
-        vlan_tag = self.next_vlan_tag()  #need to be replace by the previous line of code
+        vlan_tag = 4  #need to be replace by the previous line of code
         if not vlan_tag:
             vlan_tag = '-1'
         ret = {'vlan_tag': str(vlan_tag)}

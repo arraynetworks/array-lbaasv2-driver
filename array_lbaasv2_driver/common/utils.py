@@ -71,10 +71,15 @@ def delete_vapv(context, vapv_name):
 
 def init_internal_ip_pool(context):
     array_db = repository.ArrayIPPoolsRepository()
-    # pool = array_db.exists(context.session, 1)
-    # if pool:
-    #     return
+    pool = array_db.exists(context.session, 1)
+    if pool:
+        LOG.debug("array_ip_pool already exists and will not create it again")        
+        return
     nums = range(0, 256)
     for num in nums:
         internal_ip = "3.1." + str(num) + ".0"
-        array_db.create(context.session, inter_ip=internal_ip, used=False)
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True)
+    nums = range(256, 512)
+    for num in nums:
+        internal_ip = "1234:0:" + str(num) + "::0"
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=False)

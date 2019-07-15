@@ -11,6 +11,7 @@
 #    under the License.
 
 import models
+import IPy
 
 class BaseRepository(object):
     model_class = None
@@ -106,7 +107,8 @@ class ArrayIPPoolsRepository(BaseRepository):
     model_class = models.ArrayAPVIPPOOL
 
     def get_one_available_entry(self, session, seg_name, seg_ip):
-        ip_pool = session.query(self.model_class).filter_by(used=False).first()
+        is_ipv4 = IPy.IP(seg_ip).version() == 4
+        ip_pool = session.query(self.model_class).filter_by(used=False, ipv4=is_ipv4).first()
         if ip_pool:
             return ip_pool
         return None
