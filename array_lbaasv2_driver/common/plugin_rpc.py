@@ -182,7 +182,7 @@ class ArrayLoadBalancerCallbacks(object):
         self._failed_completion(context, self.OBJ_TYPE_L7POLICY, obj)
 
     def create_port_on_subnet(self, context, subnet_id, name, host,
-        fixed_address_count=1):
+        device_id, fixed_address_count=1):
         subnet = self.driver.plugin.db._core_plugin.get_subnet(context, subnet_id)
         fixed_ip = {'subnet_id': subnet['id']}
         if fixed_address_count > 1:
@@ -197,7 +197,7 @@ class ArrayLoadBalancerCallbacks(object):
             'network_id': subnet['network_id'],
             'mac_address': n_const.ATTR_NOT_SPECIFIED,
             'admin_state_up': True,
-            'device_id': '',
+            'device_id': device_id,
             'device_owner': n_const.DEVICE_OWNER_LOADBALANCERV2,
             'fixed_ips': fixed_ips
         }
