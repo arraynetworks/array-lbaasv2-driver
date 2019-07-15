@@ -66,6 +66,9 @@ def create_vapv(context, vapv_name, lb_id, subnet_id, in_use_lb,
 
 
 def delete_vapv(context, vapv_name):
-    array_db = repository.ArrayLBaaSv2Repository()
-    array_db.delete(context.session, hostname=vapv_name)
+    try:
+        array_db = repository.ArrayLBaaSv2Repository()
+        array_db.delete(context.session, hostname=vapv_name)
+    except Exception as e:
+        LOG.debug("Failed to delete array_lbaasv2")
 
