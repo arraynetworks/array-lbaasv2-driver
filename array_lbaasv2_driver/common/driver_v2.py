@@ -207,6 +207,11 @@ class LoadBalancerManager(BaseManager):
                 plugin_constants.ERROR)
         except Exception as e:
             LOG.error("Exception: loadbalancer create: --%s--" % e.message)
+            driver.plugin.db.update_status(
+                context,
+                models.LoadBalancer,
+                loadbalancer.id,
+                plugin_constants.ERROR)
             raise e
 
     @log_helpers.log_method_call
