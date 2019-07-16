@@ -99,6 +99,10 @@ class ArrayLBaaSv2Repository(BaseRepository):
         vapvs = session.query(self.model_class).all()
         return [vapv.hostname for vapv in vapvs]
 
+    def get_all_tags(self, session):
+        vapvs = session.query(self.model_class).all()
+        return [vapv.cluster_id for vapv in vapvs]
+
     def get_clusterids_by_subnet(self, session, subnet_id):
         vapvs = session.query(self.model_class).filter_by(subnet_id=subnet_id)
         return [vapv.cluster_id for vapv in vapvs]

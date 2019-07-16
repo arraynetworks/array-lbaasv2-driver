@@ -186,7 +186,7 @@ class ArrayLoadBalancerCallbacks(object):
         self._failed_completion(context, self.OBJ_TYPE_L7POLICY, obj)
 
     def create_port_on_subnet(self, context, subnet_id, name, host,
-        fixed_address_count=1):
+        device_id, fixed_address_count=1):
         subnet = self.driver.plugin.db._core_plugin.get_subnet(context, subnet_id)
         fixed_ip = {'subnet_id': subnet['id']}
         if fixed_address_count > 1:
@@ -201,7 +201,7 @@ class ArrayLoadBalancerCallbacks(object):
             'network_id': subnet['network_id'],
             'mac_address': n_const.ATTR_NOT_SPECIFIED,
             'admin_state_up': True,
-            'device_id': '',
+            'device_id': device_id,
             'device_owner': n_const.DEVICE_OWNER_LOADBALANCERV2,
             'fixed_ips': fixed_ips
         }
@@ -265,10 +265,18 @@ class ArrayLoadBalancerCallbacks(object):
             ret = {'vapv_name': str(vapv_name)}
         return ret
 
+    def generate_tags(self, context):
+        ret = None
+        vlan_tag = utils.generate_tags(context)
+        if vlan_tag:
+            ret = {'vlan_tag': vlan_tag}
+        return ret
+
     def create_vapv(self, context, vapv_name, lb_id, subnet_id,
-        in_use_lb, pri_port_id, sec_port_id):
+        in_use_lb, pri_port_id, sec_port_id, cluster_id):
         vapv = utils.create_vapv(context, vapv_name, lb_id,
-            subnet_id, in_use_lb, pri_port_id, sec_port_id)
+            subnet_id, in_use_lb, pri_port_id, sec_port_id,
+            cluster_id)
         return vapv
 
     def delete_vapv(self, context, vapv_name):
