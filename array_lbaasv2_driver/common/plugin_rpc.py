@@ -241,6 +241,18 @@ class ArrayLoadBalancerCallbacks(object):
         ret = {'vlan_tag': str(vlan_tag)}
         return ret
 
+    def get_excepted_vapvs(self, context):
+        array_db = repository.ArrayLBaaSv2Repository()
+        vapv = array_db.get_excepted_vapvs(context.session)
+        if not vapv:
+            return None
+        return vapv
+
+    def update_excepted_vapv_by_name(self, context, va_name):
+        array_db = repository.ArrayLBaaSv2Repository()
+        array_db.update_excepted_vapv_by_name(context.session,
+            va_name)
+
     def get_vapv_by_lb_id(self, context, vip_id):
         array_db = repository.ArrayLBaaSv2Repository()
         vapv = array_db.get(context.session, lb_id=vip_id)
