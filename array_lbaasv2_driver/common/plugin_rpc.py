@@ -228,7 +228,10 @@ class ArrayLoadBalancerCallbacks(object):
 
     def get_vlan_id_by_port_huawei(self, context, port_id):
         agent_hosts = []
-        candidates = self.driver.plugin.db.get_lbaas_agents(context, active=True)
+        # FIXME: when invoking get_lbaas_agents, it SHOULD specify active=True
+        # After then, we should record the vlan tag into array_lbaasv2 table when
+        # create_vapv, and read the value in delete_loadbalancer
+        candidates = self.driver.plugin.db.get_lbaas_agents(context)
         for candidate in candidates:
             agent_hosts.append(candidate['host'])
 
