@@ -260,10 +260,18 @@ class ArrayLoadBalancerCallbacks(object):
             ret = {'vapv_name': str(vapv_name)}
         return ret
 
+    def generate_tags(self, context):
+        ret = None
+        vlan_tag = utils.generate_tags(context)
+        if vlan_tag:
+            ret = {'vlan_tag': vlan_tag}
+        return ret
+
     def create_vapv(self, context, vapv_name, lb_id, subnet_id,
-        in_use_lb, pri_port_id, sec_port_id):
+        in_use_lb, pri_port_id, sec_port_id, cluster_id):
         vapv = utils.create_vapv(context, vapv_name, lb_id,
-            subnet_id, in_use_lb, pri_port_id, sec_port_id)
+            subnet_id, in_use_lb, pri_port_id, sec_port_id,
+            cluster_id)
         return vapv
 
     def delete_vapv(self, context, vapv_name):

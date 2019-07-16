@@ -32,6 +32,7 @@ except Exception as e:
     LOG.debug("Failed to register opt(array_interface), maybe has been registered.")
 
 vapv_pool = []
+vlan_tags = []
 
 def generate_vapv(context):
     global vapv_pool
@@ -56,13 +57,33 @@ def generate_vapv(context):
     return None
 
 
+def generate_tags(context):
+    global vlan_tags
+
+    if not vlan_tags:
+        for i in range(1, 260):
+            vlan_tags.append(i)
+
+    array_db = repository.ArrayLBaaSv2Repository()
+    exist_tags = array_db.get_all_tags(context.session)
+
+    LOG.debug("----------%s----------", vlan_tags)
+    LOG.debug("----------%s----------", exist_tags)
+    diff_tags = [i for i in vlan_tags + exist_tags if i not in vlan_tags or i not in exist_tags]
+    LOG.debug("----------%s----------", diff_tags)
+    if len(diff_tags) > 0:
+        return diff_tags[0]
+    return None
+
+
 def create_vapv(context, vapv_name, lb_id, subnet_id, in_use_lb,
-                pri_port_id, sec_port_id):
+    pri_port_id, sec_port_id, cluster_id):
     array_db = repository.ArrayLBaaSv2Repository()
     return array_db.create(context.session,
         in_use_lb=in_use_lb, lb_id=lb_id,
         subnet_id=subnet_id, hostname=vapv_name,
-        sec_port_id=sec_port_id, pri_port_id=pri_port_id)
+        sec_port_id=sec_port_id, pri_port_id=pri_port_id,
+        cluster_id=cluster_id)
 
 
 def delete_vapv(context, vapv_name):
@@ -70,5 +91,5 @@ def delete_vapv(context, vapv_name):
         array_db = repository.ArrayLBaaSv2Repository()
         array_db.delete(context.session, hostname=vapv_name)
     except Exception as e:
-        LOG.debug("Failed to delete array_lbaasv2")
+        LOG.debug("Failed to delete array_lbaasv2(%s)", e.message)
 
