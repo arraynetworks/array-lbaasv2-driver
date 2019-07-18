@@ -83,7 +83,6 @@ class ArrayLoadBalancerCallbacks(object):
         }
         self.interfaces = self.get_interfaces()
         self.next_interface = self.createCounter(len(self.interfaces))
-        # self.next_vlan_tag = self.createCounter(256)  #need to be replaced by huawei vlan tag
 
     def _successful_completion(self, context, obj_type, obj, delete=False,
             lb_create=False):
@@ -236,10 +235,14 @@ class ArrayLoadBalancerCallbacks(object):
         for candidate in candidates:
             agent_hosts.append(candidate['host'])
 
-        # vlan_tag = db.get_segment_id_by_port_huawei(context, port_id, agent_hosts)
-        vlan_tag = 4  #need to be replace by the previous line of code
+        vlan_tag = db.get_segment_id_by_port_huawei(context, port_id, agent_hosts)
         if not vlan_tag:
-            vlan_tag = '-1'
+            vlan_tag = self.get_vlan_by_port(context, port_id)
+            if not vlan_tag:
+                vlan_tag = utils.generate_mock_vlan_tags(context, port_id)
+                if not vlan_tag:
+                    LOG.error("Failed to get vlan tag from generate_mock_vlan_tags")
+                    vlan_tag = -1
         ret = {'vlan_tag': str(vlan_tag)}
         return ret
 
@@ -281,6 +284,9 @@ class ArrayLoadBalancerCallbacks(object):
 
     def delete_vapv(self, context, vapv_name):
         utils.delete_vapv(context, vapv_name)
+
+    def delete_vlan_by_port(self, context, port_id):
+        utils.delete_vlan_by_port(context, port_id)
 
     def delete_port(self, context, port_id=None, mac_address=None):
         """Delete port."""
@@ -388,11 +394,7 @@ class ArrayLoadBalancerCallbacks(object):
     def get_internal_ip_by_lb(self, context, seg_name, seg_ip):
         array_db = repository.ArrayIPPoolsRepository()
         if seg_name and seg_ip:
-            internal_ip = array_db.get_used_internal_ip(context.session, seg_name, seg_ip)
-            if internal_ip:
-                return internal_ip
-            else:
-                return None
+            return array_db.get_used_internal_ip(context.session, seg_name, seg_ip)
         else:
             return None
 
@@ -415,7 +417,17 @@ class ArrayLoadBalancerCallbacks(object):
 
     def get_interface(self, context):
         if len(self.interfaces) > 0:
-            return self.interfaces[self.next_interface() - 1]
+            interface = self.interfaces[self.next_interface() - 1]
+            LOG.debug("get the interface(%s) from get_interface", interface)
+            return interface
         else:
             LOG.error("Failed to get interface from interfaces(%s)", self.interfaces)
             return None
+
+    def get_vlan_by_port(self, context, port_id):
+        array_db = repository.ArrayVlanTagsRepository()
+        if port_id: 
+            return array_db.get_vlan_by_port(context.session, port_id)
+        else:
+            LOG.debug("Failed to get the vlan tag by the port id %s", port_id)
+            return None        

@@ -122,3 +122,16 @@ class ArrayIPPoolsRepository(BaseRepository):
         if ip_pool:
             return ip_pool.inter_ip
         return None
+
+class ArrayVlanTagsRepository(BaseRepository):
+    model_class = models.ArrayVLANTAGS
+
+    def get_vlan_by_port(self, session, port_id):
+        vlan_tags = session.query(self.model_class).filter_by(port_id=port_id).first()
+        if vlan_tags:
+            return vlan_tags.vlan_tag
+        return None
+
+    def get_all_vlan_tags(self, session):
+        vlan_tags = session.query(self.model_class).all()
+        return [vlan.vlan_tag for vlan in vlan_tags]

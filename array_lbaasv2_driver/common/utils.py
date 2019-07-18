@@ -33,6 +33,7 @@ except Exception as e:
 
 vapv_pool = []
 vlan_tags = []
+mock_vlan_tags = []
 
 def generate_vapv(context):
     global vapv_pool
@@ -76,6 +77,26 @@ def generate_tags(context):
     return None
 
 
+def generate_mock_vlan_tags(context, port_id):
+    global mock_vlan_tags
+
+    if not mock_vlan_tags:
+        for i in range(1, 260):
+            mock_vlan_tags.append(i)
+
+    array_db = repository.ArrayVlanTagsRepository()
+    exist_tags = array_db.get_all_vlan_tags(context.session)
+
+    LOG.debug("----------mock_vlan_tags(%s)----------", mock_vlan_tags)
+    LOG.debug("----------mock_exist_tags(%s)----------", exist_tags)
+    diff_tags = [i for i in mock_vlan_tags + exist_tags if i not in mock_vlan_tags or i not in exist_tags]
+    LOG.debug("----------mock_diff_tags(%s)----------", diff_tags)
+    if len(diff_tags) > 0:
+        vlan_tag = diff_tags[0]
+        array_db.create(context.session, port_id=port_id, vlan_tag=vlan_tag)
+        return vlan_tag
+    return None
+
 def create_vapv(context, vapv_name, lb_id, subnet_id, in_use_lb,
                 pri_port_id, sec_port_id, cluster_id):
     array_db = repository.ArrayLBaaSv2Repository()
@@ -93,6 +114,13 @@ def delete_vapv(context, vapv_name):
     except Exception as e:
         LOG.debug("Failed to delete array_lbaasv2(%s)", e.message)
 
+def delete_vlan_by_port(context, port_id):
+    try:
+        array_db = repository.ArrayLBaaSv2Repository()
+        array_db.delete(context.session, port_id=port_id)
+    except Exception as e:
+        LOG.debug("Failed to delete array_vlan_tags(%s)", e.message)
+
 def init_internal_ip_pool(context):
     array_db = repository.ArrayIPPoolsRepository()
     pool = array_db.exists(context.session, 1)
@@ -103,6 +131,14 @@ def init_internal_ip_pool(context):
     for num in nums:
         internal_ip = "3.1." + str(num) + ".0"
         array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True)
+    nums = range(0, 256)
+    for num in nums:
+        internal_ip = "3.2." + str(num) + ".0"
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True)
+    nums = range(0, 256)
+    for num in nums:
+        internal_ip = "1234:0:" + str(num) + "::0"
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=False)
     nums = range(256, 512)
     for num in nums:
         internal_ip = "1234:0:" + str(num) + "::0"
