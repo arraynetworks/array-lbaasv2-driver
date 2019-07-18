@@ -348,6 +348,11 @@ class ArrayLoadBalancerCallbacks(object):
                 LOG.error('Exception: update_member_status: %s',
                           e.message)
 
+    def scrub_dead_agents(self, context):
+        active_agents = self.driver.array.scheduler.scrub_dead_agents(
+            context, self.driver.plugin, self.driver.array.environment
+        )
+
     def get_members_status_on_agent(self, context, agent_host_name):
         lb_members = {}
         plugin = self.driver.plugin
