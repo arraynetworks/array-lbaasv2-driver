@@ -110,15 +110,15 @@ class ArrayLBaaSv2Repository(BaseRepository):
 class ArrayIPPoolsRepository(BaseRepository):
     model_class = models.ArrayAPVIPPOOL
 
-    def get_one_available_entry(self, session, seg_name, seg_ip):
+    def get_one_available_entry(self, session, seg_name, seg_ip, use_for_nat):
         is_ipv4 = IPy.IP(seg_ip).version() == 4
-        ip_pool = session.query(self.model_class).filter_by(used=False, ipv4=is_ipv4).first()
+        ip_pool = session.query(self.model_class).filter_by(used=False, ipv4=is_ipv4, use_for_nat=use_for_nat).first()
         if ip_pool:
             return ip_pool
         return None
 
-    def get_used_internal_ip(self, session, seg_name, seg_ip):
-        ip_pool = session.query(self.model_class).filter_by(seg_name=seg_name, seg_ip=seg_ip).first()
+    def get_used_internal_ip(self, session, seg_name, seg_ip, use_for_nat):
+        ip_pool = session.query(self.model_class).filter_by(seg_name=seg_name, seg_ip=seg_ip, use_for_nat=use_for_nat).first()
         if ip_pool:
             return ip_pool.inter_ip
         return None

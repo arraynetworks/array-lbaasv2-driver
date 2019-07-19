@@ -377,24 +377,24 @@ class ArrayLoadBalancerCallbacks(object):
             return None
         return cluster_id
 
-    def get_available_internal_ip(self, context, seg_name, seg_ip):
+    def get_available_internal_ip(self, context, seg_name, seg_ip, use_for_nat=False):
         array_db = repository.ArrayIPPoolsRepository()
         if seg_name and seg_ip:
-            ip_pool = array_db.get_one_available_entry(context.session, seg_name, seg_ip)
+            ip_pool = array_db.get_one_available_entry(context.session, seg_name, seg_ip, use_for_nat)
             if ip_pool:
                 array_db.update(context.session, ip_pool.id,
                     seg_name = seg_name, seg_ip = seg_ip,
-                    inter_ip = ip_pool.inter_ip, used = True)
+                    inter_ip = ip_pool.inter_ip, used = True, use_for_nat=use_for_nat)
                 return ip_pool.inter_ip
             else:
                 return None
         else:
             return None
 
-    def get_internal_ip_by_lb(self, context, seg_name, seg_ip):
+    def get_internal_ip_by_lb(self, context, seg_name, seg_ip, use_for_nat=False):
         array_db = repository.ArrayIPPoolsRepository()
         if seg_name and seg_ip:
-            return array_db.get_used_internal_ip(context.session, seg_name, seg_ip)
+            return array_db.get_used_internal_ip(context.session, seg_name, seg_ip, use_for_nat)
         else:
             return None
 

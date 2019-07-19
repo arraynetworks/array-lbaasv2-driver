@@ -127,19 +127,21 @@ def init_internal_ip_pool(context):
     if pool:
         LOG.debug("array_ip_pool already exists and will not create it again")        
         return
-    nums = range(0, 256)
+    #ipv4
+    nums = range(0, 255)
     for num in nums:
         internal_ip = "3.1." + str(num) + ".0"
-        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True)
-    nums = range(0, 256)
-    for num in nums:
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True, use_for_nat=False)
+        internal_ip = "3.3." + "0." + str(num) 
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True, use_for_nat=True)
         internal_ip = "3.2." + str(num) + ".0"
-        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True)
-    nums = range(0, 256)
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True, use_for_nat=False)
+        internal_ip = "3.4." + "0." + str(num) 
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True, use_for_nat=True)
+    #IPV6
+    nums = range(0, 512)
     for num in nums:
         internal_ip = "1234:0:" + str(num) + "::0"
-        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=False)
-    nums = range(256, 512)
-    for num in nums:
-        internal_ip = "1234:0:" + str(num) + "::0"
-        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=False)
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=False, use_for_nat=False)
+        internal_ip = "1235::" + str(num) 
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=False, use_for_nat=True)
