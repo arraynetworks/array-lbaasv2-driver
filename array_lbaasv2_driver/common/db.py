@@ -154,8 +154,6 @@ def get_segment_id_by_port_huawei(context, port_id, agent_hosts):
     LOG.debug("array db: segment_id is %s" % segment_id)
     return segment_id
 
-
-
 def _get_segment(context, port_id, agent_hosts):
     try:
         segment = None

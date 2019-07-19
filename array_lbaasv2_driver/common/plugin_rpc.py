@@ -407,12 +407,39 @@ class ArrayLoadBalancerCallbacks(object):
             return f[0]
         return increase
 
-    def get_interfaces(self):
+    def get_array_interfaces(self):
         interfaces = cfg.CONF.arraynetworks.array_interfaces
         if interfaces:
             LOG.debug("get the interfaces(%s) from configuration", interfaces)
-            return interfaces.split(",")
+            interfaces_map = interfaces.split(",")
+            bonds_dic = {}
+            for interface_map in interfaces_map:
+                bond_map = interface_map.strip()
+                index = bond_map.index(":")
+                bond = bond_map[:index]
+                if bonds_dic.has_key(bond):
+                    bonds_dic[bond].append(bond_map[index + 1:])
+                else:
+                   ports = []
+                   ports.append(bond_map[index + 1:])
+                   bonds_dic[bond] = ports
+            return bonds_dic
         else:
+            return {}
+
+    def get_interfaces(self):
+        interfaces_dic = self.get_array_interfaces()
+        if interfaces_dic:
+            return interfaces_dic.keys()
+        else:
+            return []
+
+    def get_interface_port(self, context, bond):
+        interfaces_dic = self.get_array_interfaces()
+        if interfaces_dic and interfaces_dic.has_key(bond):
+            return interfaces_dic[bond]
+        else:
+            LOG.error("Failed to get interface port from interfaces_dic(%s)", interfaces_dic)
             return []
 
     def get_interface(self, context):
