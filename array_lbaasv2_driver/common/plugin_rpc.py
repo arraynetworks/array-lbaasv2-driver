@@ -349,9 +349,36 @@ class ArrayLoadBalancerCallbacks(object):
                           e.message)
 
     def scrub_dead_agents(self, context):
-        active_agents = self.driver.array.scheduler.scrub_dead_agents(
+        self.driver.array.scheduler.scrub_dead_agents(
             context, self.driver.plugin, self.driver.array.environment
         )
+
+    def check_subnet_used(self, context, subnet_id, lb_id_filter=None,
+        member_id_filter=None):
+        count = 0
+        lbs = self.driver.plugin.db.get_loadbalancers(context)
+        for lb in lbs:
+            if lb_id_filter and lb_id_filter == lb.id:
+                continue
+            if lb.vip_subnet_id == subnet_id:
+                count = 1
+                break
+
+        if count == 1:
+            ret = {'count': count}
+            return ret
+
+        members = self.driver.plugin.db.get_pool_members(context)
+        for member in members:
+            if member_id_filter and lb_id_filter == member.id:
+                continue
+            if member.subnet_id == subnet_id:
+                count = 1
+                break
+
+        ret = {'count': count}
+        return ret
+
 
     def get_members_status_on_agent(self, context, agent_host_name):
         lb_members = {}
