@@ -231,7 +231,10 @@ class ArrayLoadBalancerCallbacks(object):
 
     def get_vlan_id_by_port_huawei(self, context, port_id):
         agent_hosts = []
-        candidates = self.driver.plugin.db.get_lbaas_agents(context, active=True)
+        # FIXME: when invoking get_lbaas_agents, it SHOULD specify active=True
+        # After then, we should record the vlan tag into array_lbaasv2 table when
+        # create_vapv, and read the value in delete_loadbalancer
+        candidates = self.driver.plugin.db.get_lbaas_agents(context)
         for candidate in candidates:
             agent_hosts.append(candidate['host'])
 
@@ -245,6 +248,18 @@ class ArrayLoadBalancerCallbacks(object):
                     vlan_tag = -1
         ret = {'vlan_tag': str(vlan_tag)}
         return ret
+
+    def get_excepted_vapvs(self, context):
+        array_db = repository.ArrayLBaaSv2Repository()
+        vapv = array_db.get_excepted_vapvs(context.session)
+        if not vapv:
+            return None
+        return vapv
+
+    def update_excepted_vapv_by_name(self, context, va_name):
+        array_db = repository.ArrayLBaaSv2Repository()
+        array_db.update_excepted_vapv_by_name(context.session,
+            va_name)
 
     def get_vapv_by_lb_id(self, context, vip_id):
         array_db = repository.ArrayLBaaSv2Repository()
@@ -343,6 +358,38 @@ class ArrayLoadBalancerCallbacks(object):
             except Exception as e:
                 LOG.error('Exception: update_member_status: %s',
                           e.message)
+
+    def scrub_dead_agents(self, context):
+        self.driver.array.scheduler.scrub_dead_agents(
+            context, self.driver.plugin, self.driver.array.environment
+        )
+
+    def check_subnet_used(self, context, subnet_id, lb_id_filter=None,
+        member_id_filter=None):
+        count = 0
+        lbs = self.driver.plugin.db.get_loadbalancers(context)
+        for lb in lbs:
+            if lb_id_filter and lb_id_filter == lb.id:
+                continue
+            if lb.vip_subnet_id == subnet_id:
+                count = 1
+                break
+
+        if count == 1:
+            ret = {'count': count}
+            return ret
+
+        members = self.driver.plugin.db.get_pool_members(context)
+        for member in members:
+            if member_id_filter and lb_id_filter == member.id:
+                continue
+            if member.subnet_id == subnet_id:
+                count = 1
+                break
+
+        ret = {'count': count}
+        return ret
+
 
     def get_members_status_on_agent(self, context, agent_host_name):
         lb_members = {}

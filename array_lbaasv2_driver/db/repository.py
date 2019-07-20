@@ -89,6 +89,21 @@ class ArrayLBaaSv2Repository(BaseRepository):
             return vapv.hostname
         return None
 
+    def get_excepted_vapvs(self, session):
+        vapvs = session.query(self.model_class).all()
+        res_vapvs = []
+        for vapv in vapvs:
+            if vapv.in_use_lb == 10 or vapv.in_use_lb == 11:
+                res_vapvs.append(vapv.to_dict())
+        return res_vapvs
+
+    def update_excepted_vapv_by_name(self, session, va_name):
+        updated = {}
+        updated['in_use_lb'] = 1
+        with session.begin(subtransactions=True):
+            session.query(self.model_class).filter_by(
+                hostname=va_name).update(updated)
+
     def get_va_by_tenant_id(self, session, tenant_id):
         vapv = session.query(self.model_class).filter_by(tenant_id=tenant_id).first()
         if vapv:
@@ -135,3 +150,4 @@ class ArrayVlanTagsRepository(BaseRepository):
     def get_all_vlan_tags(self, session):
         vlan_tags = session.query(self.model_class).all()
         return [vlan.vlan_tag for vlan in vlan_tags]
+
