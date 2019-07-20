@@ -238,14 +238,13 @@ class ArrayLoadBalancerCallbacks(object):
         for candidate in candidates:
             agent_hosts.append(candidate['host'])
 
-        vlan_tag = db.get_segment_id_by_port_huawei(context, port_id, agent_hosts)
+        # vlan_tag = db.get_segment_id_by_port_huawei(context, port_id, agent_hosts)
+        vlan_tag = self.get_vlan_by_port(context, port_id)
         if not vlan_tag:
-            vlan_tag = self.get_vlan_by_port(context, port_id)
+            vlan_tag = utils.generate_mock_vlan_tags(context, port_id)
             if not vlan_tag:
-                vlan_tag = utils.generate_mock_vlan_tags(context, port_id)
-                if not vlan_tag:
-                    LOG.error("Failed to get vlan tag from generate_mock_vlan_tags")
-                    vlan_tag = -1
+                LOG.error("Failed to get vlan tag from generate_mock_vlan_tags")
+                vlan_tag = -1
         ret = {'vlan_tag': str(vlan_tag)}
         return ret
 
@@ -417,9 +416,9 @@ class ArrayLoadBalancerCallbacks(object):
                             lb_members[lb.id] = lb_dict
             return lb_members
 
-    def get_cluster_id_by_subnet_id(self, context, subnet_id):
+    def get_cluster_id_by_lb_id(self, context, lb_id):
         array_db = repository.ArrayLBaaSv2Repository()
-        cluster_id = array_db.get_clusterids_by_subnet(context.session, subnet_id)
+        cluster_id = array_db.get_clusterids_by_id(context.session, lb_id)
         if not cluster_id:
             return None
         return cluster_id
