@@ -488,6 +488,9 @@ class ArrayLoadBalancerCallbacks(object):
             LOG.error("Failed to get interface port from interfaces_dic(%s)", interfaces_dic)
             return []
 
+    def get_all_interfaces(self, context):
+        return self.interfaces
+
     def get_interface(self, context):
         if len(self.interfaces) > 0:
             interface = self.interfaces[self.next_interface() - 1]
