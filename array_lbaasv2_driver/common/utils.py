@@ -62,7 +62,7 @@ def generate_tags(context):
     global vlan_tags
 
     if not vlan_tags:
-        for i in range(1, 260):
+        for i in range(0, 260):
             vlan_tags.append(i)
 
     array_db = repository.ArrayLBaaSv2Repository()
