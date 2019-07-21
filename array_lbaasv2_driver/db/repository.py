@@ -118,7 +118,7 @@ class ArrayLBaaSv2Repository(BaseRepository):
         vapvs = session.query(self.model_class).all()
         return [vapv.cluster_id for vapv in vapvs]
 
-    def get_clusterids_by_subnet(self, session, lb_id):
+    def get_clusterids_by_id(self, session, lb_id):
         vapvs = session.query(self.model_class).filter_by(lb_id=lb_id)
         return [vapv.cluster_id for vapv in vapvs]
 
