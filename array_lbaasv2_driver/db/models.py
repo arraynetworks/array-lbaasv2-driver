@@ -95,29 +95,3 @@ class ArrayAPVIPPOOL(BaseTable, HAS_ID, HAS_TENANT):
 
     def from_dict(cls, model_dict):
         return cls(**model_dict)
-
-class ArrayVLANTAGS(BaseTable, HAS_ID, HAS_TENANT):
-    """Represents an Array load balancer."""
-
-    __tablename__ = "array_vlan_tags"
-
-    port_id = sa.Column(sa.String(40), nullable=True)
-    vlan_tag = sa.Column(sa.Integer(), nullable=False)
-
-    def to_dict(self, **kwargs):
-        ret = {}
-        for attr in self.__dict__:
-            if attr.startswith('_') or not kwargs.get(attr, True):
-                continue
-            if isinstance(getattr(self, attr), list):
-                ret[attr] = []
-                for item in self.__dict__[attr]:
-                    ret[attr] = item
-            elif isinstance(self.__dict__[attr], unicode):
-                ret[attr.encode('utf8')] = self.__dict__[attr].encode('utf8')
-            else:
-                ret[attr] = self.__dict__[attr]
-        return ret
-
-    def from_dict(cls, model_dict):
-        return cls(**model_dict)
