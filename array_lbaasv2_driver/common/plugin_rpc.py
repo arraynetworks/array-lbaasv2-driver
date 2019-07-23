@@ -383,6 +383,16 @@ class ArrayLoadBalancerCallbacks(object):
         return ret
 
 
+    def get_port_by_name(self, context, port_name=None):
+        """Get port by name."""
+        if port_name:
+            filters = {'name': [port_name]}
+            return self.driver.plugin.db._core_plugin.get_ports(
+                context,
+                filters=filters
+            )
+
+
     def get_members_status_on_agent(self, context, agent_host_name):
         lb_members = {}
         plugin = self.driver.plugin
