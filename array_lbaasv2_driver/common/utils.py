@@ -65,7 +65,7 @@ def generate_ha_group_id(context, lb_id, subnet_id):
             ha_group_ids.append(i)
 
     array_db = repository.ArrayLBaaSv2Repository()
-    exist_ids = array_db.ha_group_ids(context.session)
+    exist_ids = array_db.get_all_ids(context.session)
 
     LOG.debug("----------%s----------", ha_group_ids)
     LOG.debug("----------%s----------", exist_ids)
