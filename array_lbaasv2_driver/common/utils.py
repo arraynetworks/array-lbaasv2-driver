@@ -32,7 +32,7 @@ except Exception as e:
     LOG.debug("Failed to register opt(array_interface), maybe has been registered.")
 
 vapv_pool = []
-vlan_tags = []
+ha_group_ids = []
 
 def generate_vapv(context):
     global vapv_pool
@@ -57,22 +57,28 @@ def generate_vapv(context):
     return None
 
 
-def generate_tags(context):
-    global vlan_tags
+def generate_ha_group_id(context, lb_id, subnet_id):
+    global ha_group_ids
 
-    if not vlan_tags:
+    if not ha_group_ids:
         for i in range(0, 260):
-            vlan_tags.append(i)
+            ha_group_ids.append(i)
 
     array_db = repository.ArrayLBaaSv2Repository()
-    exist_tags = array_db.get_all_tags(context.session)
+    exist_ids = array_db.ha_group_ids(context.session)
 
-    LOG.debug("----------%s----------", vlan_tags)
-    LOG.debug("----------%s----------", exist_tags)
-    diff_tags = [i for i in vlan_tags + exist_tags if i not in vlan_tags or i not in exist_tags]
-    LOG.debug("----------%s----------", diff_tags)
-    if len(diff_tags) > 0:
-        return diff_tags[0]
+    LOG.debug("----------%s----------", ha_group_ids)
+    LOG.debug("----------%s----------", exist_ids)
+    diff_ids = [i for i in ha_group_ids + exist_ids if i not in ha_group_ids or i not in exist_ids]
+    LOG.debug("----------%s----------", diff_ids)
+    if len(diff_ids) > 0:
+        group_id = diff_ids[0]
+        array_db.create(context.session,
+            in_use_lb=1, lb_id=lb_id,
+            subnet_id=subnet_id, hostname=lb_id[:10],
+            sec_port_id=None, pri_port_id=None,
+            cluster_id=group_id)
+        return group_id
     return None
 
 
@@ -98,7 +104,7 @@ def init_internal_ip_pool(context):
     array_db = repository.ArrayIPPoolsRepository()
     pool = array_db.exists(context.session, 1)
     if pool:
-        LOG.debug("array_ip_pool already exists and will not create it again")        
+        LOG.debug("array_ip_pool already exists and will not create it again")
         return
     #ipv4
     nums = range(0, 255)

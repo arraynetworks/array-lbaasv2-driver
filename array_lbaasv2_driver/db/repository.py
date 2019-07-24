@@ -114,7 +114,7 @@ class ArrayLBaaSv2Repository(BaseRepository):
         vapvs = session.query(self.model_class).all()
         return [vapv.hostname for vapv in vapvs]
 
-    def get_all_tags(self, session):
+    def get_all_ids(self, session):
         vapvs = session.query(self.model_class).all()
         return [vapv.cluster_id for vapv in vapvs]
 

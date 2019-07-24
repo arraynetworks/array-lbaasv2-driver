@@ -278,12 +278,12 @@ class ArrayLoadBalancerCallbacks(object):
             ret = {'vapv_name': str(vapv_name)}
         return ret
 
-    def generate_tags(self, context):
-        ret = None
-        vlan_tag = utils.generate_tags(context)
-        if vlan_tag:
-            ret = {'vlan_tag': vlan_tag}
-        return ret
+    def generate_ha_group_id(self, context, lb_id, subnet_id):
+        with context.session.begin(subtransactions=True):
+            group_id = utils.generate_ha_group_id(context, lb_id, subnet_id)
+            if group_id is None:
+                return None
+            return {'group_id': group_id}
 
     def create_vapv(self, context, vapv_name, lb_id, subnet_id,
         in_use_lb, pri_port_id, sec_port_id, cluster_id):
