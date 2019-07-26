@@ -383,6 +383,12 @@ class ArrayLoadBalancerCallbacks(object):
         return True
 
     @log_helpers.log_method_call
+    def get_loadbalancer_ids(self, context):
+        with context.session.begin(subtransactions=True):
+            lbs = self.driver.plugin.db.get_loadbalancers(context)
+            return [(lb.id, lb.vip_subnet_id) for lb in lbs]
+
+    @log_helpers.log_method_call
     def check_subnet_used(self, context, subnet_id, lb_id_filter=None,
         member_id_filter=None):
         count = 0
@@ -419,6 +425,25 @@ class ArrayLoadBalancerCallbacks(object):
                 context,
                 filters=filters
             )
+
+
+    @log_helpers.log_method_call
+    def get_vlan_tag_by_port_name(self, context, port_name):
+        """Get port by name."""
+        vlan_tag = '-1'
+        if port_name:
+            with context.session.begin(subtransactions=True):
+                filters = {'name': [port_name]}
+                ports = self.driver.plugin.db._core_plugin.get_ports(
+                    context, filters=filters)
+                if ports:
+                    return self.get_vlan_id_by_port_huawei(context, ports[0]['id'])
+                else:
+                    LOG.debug("Failed to get the port by port_name(%s)" % port_name)
+        else:
+            LOG.debug("The port_name cann't be NULL.")
+        ret = {'vlan_tag': vlan_tag}
+        return ret
 
 
     @log_helpers.log_method_call
