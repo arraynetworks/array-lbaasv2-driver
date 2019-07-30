@@ -372,7 +372,7 @@ class ArrayLoadBalancerCallbacks(object):
 
     @log_helpers.log_method_call
     def scrub_dead_agents(self, context):
-        LOG.debug('scrubing dead agent bindings')
+        LOG.debug('scrubing dead agent bindings(%s)' % self.driver.array.environment)
         with context.session.begin(subtransactions=True):
             try:
                 self.driver.array.scheduler.scrub_dead_agents(
