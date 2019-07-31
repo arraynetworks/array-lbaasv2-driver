@@ -428,6 +428,18 @@ class ArrayLoadBalancerCallbacks(object):
 
 
     @log_helpers.log_method_call
+    def get_segment_used(self, context, segment_name, lb_id_filter=None):
+        ret = {'count': 0}
+        with context.session.begin(subtransactions=True):
+            array_db = repository.ArrayLBaaSv2Repository()
+            lb_ids = array_db.get_lb_ids_by_segment_name(context.session, segment_name)
+            LOG.debug("get_segment_used: current lb ids: %s", lb_ids)
+            if lb_id_filter:
+                lb_ids.remove(lb_id_filter)
+            ret = {'count': len(lb_ids)}
+        return ret
+
+    @log_helpers.log_method_call
     def get_port_by_name(self, context, port_name=None):
         """Get port by name."""
         if port_name:

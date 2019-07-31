@@ -124,6 +124,10 @@ class ArrayLBaaSv2Repository(BaseRepository):
         vapvs = session.query(self.model_class).all()
         return [vapv.cluster_id for vapv in vapvs]
 
+    def get_lb_ids_by_segment_name(self, session, segment_name):
+        vapvs = session.query(self.model_class).filter_by(pri_port_id=segment_name)
+        return [vapv.lb_id for vapv in vapvs]
+
     def get_clusterids_by_id(self, session, lb_id):
         vapvs = session.query(self.model_class).filter_by(lb_id=lb_id)
         return [vapv.cluster_id for vapv in vapvs]
