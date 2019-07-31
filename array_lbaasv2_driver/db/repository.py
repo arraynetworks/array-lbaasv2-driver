@@ -89,6 +89,12 @@ class ArrayLBaaSv2Repository(BaseRepository):
             return vapv.hostname
         return None
 
+    def get_segment_name_by_lb_id(self, session, lb_id):
+        vapv = session.query(self.model_class).filter_by(lb_id=lb_id).first()
+        if vapv:
+            return vapv.pri_port_id
+        return None
+
     def get_excepted_vapvs(self, session):
         vapvs = session.query(self.model_class).all()
         res_vapvs = []

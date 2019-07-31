@@ -57,7 +57,7 @@ def generate_vapv(context):
     return None
 
 
-def generate_ha_group_id(context, lb_id, subnet_id):
+def generate_ha_group_id(context, lb_id, subnet_id, tenant_id, segment_name):
     global ha_group_ids
 
     if not ha_group_ids:
@@ -67,16 +67,15 @@ def generate_ha_group_id(context, lb_id, subnet_id):
     array_db = repository.ArrayLBaaSv2Repository()
     exist_ids = array_db.get_all_ids(context.session)
 
-    LOG.debug("----------%s----------", ha_group_ids)
-    LOG.debug("----------%s----------", exist_ids)
     diff_ids = [i for i in ha_group_ids + exist_ids if i not in ha_group_ids or i not in exist_ids]
     LOG.debug("----------%s----------", diff_ids)
     if len(diff_ids) > 0:
         group_id = diff_ids[0]
         array_db.create(context.session,
+            project_id=tenant_id,
             in_use_lb=1, lb_id=lb_id,
             subnet_id=subnet_id, hostname=lb_id[:10],
-            sec_port_id=None, pri_port_id=None,
+            sec_port_id=None, pri_port_id=segment_name,
             cluster_id=group_id)
         return group_id
     return None

@@ -292,9 +292,20 @@ class ArrayLoadBalancerCallbacks(object):
         return ret
 
     @log_helpers.log_method_call
-    def generate_ha_group_id(self, context, lb_id, subnet_id):
+    def get_segment_name_by_lb_id(self, context, vip_id):
+        ret = {'segment_name': ""}
+        array_db = repository.ArrayLBaaSv2Repository()
+        vapv_name = array_db.get_segment_name_by_lb_id(context.session, vip_id)
+        if vapv_name:
+            ret = {'segment_name': str(vapv_name)}
+        return ret
+
+    @log_helpers.log_method_call
+    def generate_ha_group_id(self, context, lb_id, subnet_id,
+        tenant_id, segment_name):
         with context.session.begin(subtransactions=True):
-            group_id = utils.generate_ha_group_id(context, lb_id, subnet_id)
+            group_id = utils.generate_ha_group_id(context, lb_id,
+                subnet_id, tenant_id, segment_name)
             if group_id is None:
                 return None
             return {'group_id': group_id}
