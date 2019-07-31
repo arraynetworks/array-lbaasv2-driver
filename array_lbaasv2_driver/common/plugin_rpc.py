@@ -473,6 +473,18 @@ class ArrayLoadBalancerCallbacks(object):
 
 
     @log_helpers.log_method_call
+    def get_active_agents(self, context):
+        plugin = self.driver.plugin
+        active_agents = []
+        with context.session.begin(subtransactions=True):
+            active_agents = self.driver.array.scheduler.get_array_agent_candidates(
+                context,
+                plugin,
+                self.driver.array.environment
+            )
+        return active_agents
+
+    @log_helpers.log_method_call
     def get_members_status_on_agent(self, context, agent_host_name):
         lb_members = {}
         plugin = self.driver.plugin
