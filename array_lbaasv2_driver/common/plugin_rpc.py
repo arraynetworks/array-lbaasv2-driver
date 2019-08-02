@@ -425,7 +425,7 @@ class ArrayLoadBalancerCallbacks(object):
     def get_loadbalancer_ids(self, context):
         with context.session.begin(subtransactions=True):
             lbs = self.driver.plugin.db.get_loadbalancers(context)
-            return [(lb.id, lb.vip_subnet_id) for lb in lbs]
+            return [(lb.id, lb.vip_subnet_id, lb.vip_address) for lb in lbs]
 
     @log_helpers.log_method_call
     def check_subnet_used(self, context, subnet_id, lb_id_filter=None,
