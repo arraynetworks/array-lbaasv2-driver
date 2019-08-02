@@ -32,7 +32,7 @@ except Exception as e:
     LOG.debug("Failed to register opt(array_interface), maybe has been registered.")
 
 vapv_pool = []
-vlan_tags = []
+ha_group_ids = []
 
 def generate_vapv(context):
     global vapv_pool
@@ -57,27 +57,32 @@ def generate_vapv(context):
     return None
 
 
-def generate_tags(context):
-    global vlan_tags
+def generate_ha_group_id(context, lb_id, subnet_id, tenant_id, segment_name):
+    global ha_group_ids
 
-    if not vlan_tags:
-        for i in range(2, 260):
-            vlan_tags.append(i)
+    if not ha_group_ids:
+        for i in range(0, 260):
+            ha_group_ids.append(i)
 
     array_db = repository.ArrayLBaaSv2Repository()
-    exist_tags = array_db.get_all_tags(context.session)
+    exist_ids = array_db.get_all_ids(context.session)
 
-    LOG.debug("----------%s----------", vlan_tags)
-    LOG.debug("----------%s----------", exist_tags)
-    diff_tags = [i for i in vlan_tags + exist_tags if i not in vlan_tags or i not in exist_tags]
-    LOG.debug("----------%s----------", diff_tags)
-    if len(diff_tags) > 0:
-        return diff_tags[0]
+    diff_ids = [i for i in ha_group_ids + exist_ids if i not in ha_group_ids or i not in exist_ids]
+    LOG.debug("----------%s----------", diff_ids)
+    if len(diff_ids) > 0:
+        group_id = diff_ids[0]
+        array_db.create(context.session,
+            project_id=tenant_id,
+            in_use_lb=1, lb_id=lb_id,
+            subnet_id=subnet_id, hostname=lb_id[:10],
+            sec_port_id=None, pri_port_id=segment_name,
+            cluster_id=group_id)
+        return group_id
     return None
 
 
 def create_vapv(context, vapv_name, lb_id, subnet_id, in_use_lb,
-    pri_port_id, sec_port_id, cluster_id):
+                pri_port_id, sec_port_id, cluster_id):
     array_db = repository.ArrayLBaaSv2Repository()
     return array_db.create(context.session,
         in_use_lb=in_use_lb, lb_id=lb_id,
@@ -93,3 +98,28 @@ def delete_vapv(context, vapv_name):
     except Exception as e:
         LOG.debug("Failed to delete array_lbaasv2(%s)", e.message)
 
+
+def init_internal_ip_pool(context):
+    array_db = repository.ArrayIPPoolsRepository()
+    pool = array_db.exists(context.session, 1)
+    if pool:
+        LOG.debug("array_ip_pool already exists and will not create it again")
+        return
+    #ipv4
+    nums = range(0, 255)
+    for num in nums:
+        internal_ip = "3.1." + str(num) + ".0"
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True, use_for_nat=False)
+        internal_ip = "3.3." + "0." + str(num) 
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True, use_for_nat=True)
+        internal_ip = "3.2." + str(num) + ".0"
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True, use_for_nat=False)
+        internal_ip = "3.4." + "0." + str(num) 
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True, use_for_nat=True)
+    #IPV6
+    nums = range(0, 512)
+    for num in nums:
+        internal_ip = "1234:0:" + str(num) + "::0"
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=False, use_for_nat=False)
+        internal_ip = "1235::" + str(num) 
+        array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=False, use_for_nat=True)

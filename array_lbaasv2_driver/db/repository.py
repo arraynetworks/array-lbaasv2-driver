@@ -11,6 +11,7 @@
 #    under the License.
 
 import models
+import netaddr
 
 class BaseRepository(object):
     model_class = None
@@ -88,6 +89,12 @@ class ArrayLBaaSv2Repository(BaseRepository):
             return vapv.hostname
         return None
 
+    def get_segment_name_by_lb_id(self, session, lb_id):
+        vapv = session.query(self.model_class).filter_by(lb_id=lb_id).first()
+        if vapv:
+            return vapv.pri_port_id
+        return None
+
     def get_excepted_vapvs(self, session):
         vapvs = session.query(self.model_class).all()
         res_vapvs = []
@@ -113,8 +120,30 @@ class ArrayLBaaSv2Repository(BaseRepository):
         vapvs = session.query(self.model_class).all()
         return [vapv.hostname for vapv in vapvs]
 
-    def get_all_tags(self, session):
+    def get_all_ids(self, session):
         vapvs = session.query(self.model_class).all()
         return [vapv.cluster_id for vapv in vapvs]
 
+    def get_lb_ids_by_segment_name(self, session, segment_name):
+        vapvs = session.query(self.model_class).filter_by(pri_port_id=segment_name)
+        return [vapv.lb_id for vapv in vapvs]
 
+    def get_clusterids_by_id(self, session, lb_id):
+        vapvs = session.query(self.model_class).filter_by(lb_id=lb_id)
+        return [vapv.cluster_id for vapv in vapvs]
+
+class ArrayIPPoolsRepository(BaseRepository):
+    model_class = models.ArrayAPVIPPOOL
+
+    def get_one_available_entry(self, session, seg_name, seg_ip, use_for_nat):
+        is_ipv4 = netaddr.valid_ipv4(seg_ip)
+        ip_pool = session.query(self.model_class).filter_by(used=False, ipv4=is_ipv4, use_for_nat=use_for_nat).first()
+        if ip_pool:
+            return ip_pool
+        return None
+
+    def get_used_internal_ip(self, session, seg_name, seg_ip, use_for_nat):
+        ip_pool = session.query(self.model_class).filter_by(seg_name=seg_name, seg_ip=seg_ip, use_for_nat=use_for_nat).first()
+        if ip_pool:
+            return ip_pool.inter_ip
+        return None

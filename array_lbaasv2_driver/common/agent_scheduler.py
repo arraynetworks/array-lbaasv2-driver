@@ -57,7 +57,9 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
         # TODO: Here, it should be active array agents
         agents = self.get_array_agent_candidates(context, plugin, environment)
         if agents:
+            LOG.debug("array_scheduler: Find active agents(%s)" % agents)
             reassigned_agent = agents[0]
+            LOG.debug("array_scheduler: reassigned agent(%s)" % reassigned_agent)
             bindings = \
                 context.session.query(
                     agent_scheduler.LoadbalancerAgentBinding).filter_by(
@@ -71,11 +73,13 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
                        reassigned_agent['id']))
             return reassigned_agent
         else:
+            LOG.debug("array_scheduler: Can't find any active agent(environment: %s)" % environment)
             return None
 
-    def get_dead_agents(self, context, plugin):
+    def get_dead_agents(self, context, plugin, environment):
         return_agents = []
-        all_agents = self.get_all_agents(context, plugin, active=None)
+        all_agents = self.get_array_agent_candidates(context, plugin,
+            environment, active=None)
 
         for agent in all_agents:
 
@@ -88,8 +92,9 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
 
 
     def scrub_dead_agents(self, context, plugin, environment=None):
-        dead_agents = self.get_dead_agents(context, plugin)
+        dead_agents = self.get_dead_agents(context, plugin, environment)
         for agent in dead_agents:
+            LOG.debug("array_scheduler: Find the dead agent(%s)" % agent)
             self.rebind_loadbalancers(context, plugin, agent, environment)
 
 
@@ -104,8 +109,8 @@ class ArrayScheduler(agent_scheduler.ChanceScheduler):
         return agent_conf
 
 
-    def get_array_agent_candidates(self, context, plugin, environment):
-        active_agents = self.get_all_agents(context, plugin, active=True)
+    def get_array_agent_candidates(self, context, plugin, environment, active=True):
+        active_agents = self.get_all_agents(context, plugin, active=active)
         device_driver = "array"
         with context.session.begin(subtransactions=True):
             return_candidates = []

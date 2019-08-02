@@ -66,3 +66,32 @@ class ArrayLBaaSv2(BaseTable, HAS_ID, HAS_TENANT):
         return cls(**model_dict)
 
 
+class ArrayAPVIPPOOL(BaseTable, HAS_ID, HAS_TENANT):
+    """Represents an Array load balancer."""
+
+    __tablename__ = "array_ip_pool"
+
+    seg_name = sa.Column(sa.String(64), nullable=True)
+    seg_ip = sa.Column(sa.String(36), nullable=True)
+    inter_ip = sa.Column(sa.String(36), nullable=False)
+    used = sa.Column(sa.Boolean, default=False, nullable=False)
+    ipv4 = sa.Column(sa.Boolean, default=True, nullable=False)
+    use_for_nat = sa.Column(sa.Boolean, default=False, nullable=False)
+
+    def to_dict(self, **kwargs):
+        ret = {}
+        for attr in self.__dict__:
+            if attr.startswith('_') or not kwargs.get(attr, True):
+                continue
+            if isinstance(getattr(self, attr), list):
+                ret[attr] = []
+                for item in self.__dict__[attr]:
+                    ret[attr] = item
+            elif isinstance(self.__dict__[attr], unicode):
+                ret[attr.encode('utf8')] = self.__dict__[attr].encode('utf8')
+            else:
+                ret[attr] = self.__dict__[attr]
+        return ret
+
+    def from_dict(cls, model_dict):
+        return cls(**model_dict)

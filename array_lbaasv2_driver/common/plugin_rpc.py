@@ -10,7 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import logging
+from oslo_log import helpers as log_helpers
+from oslo_log import log as logging
 
 from neutron_lib import constants as n_const
 from neutron_lbaas.services.loadbalancer import data_models
@@ -21,6 +22,7 @@ from neutron_lbaas.db.loadbalancer import models
 from array_lbaasv2_driver.common import db
 from array_lbaasv2_driver.common import utils
 from array_lbaasv2_driver.db import repository
+from oslo_config import cfg
 
 LOG = logging.getLogger(__name__)
 
@@ -80,6 +82,8 @@ class ArrayLoadBalancerCallbacks(object):
             "l7policy.model": data_models.L7Policy,
             "l7rule.model": data_models.L7Rule,
         }
+        self.interfaces = self.get_interfaces()
+        self.next_interface = self.createCounter(len(self.interfaces))
 
     def _successful_completion(self, context, obj_type, obj, delete=False,
             lb_create=False):
@@ -181,6 +185,7 @@ class ArrayLoadBalancerCallbacks(object):
     def l7policy_failed_completion(self, context, obj):
         self._failed_completion(context, self.OBJ_TYPE_L7POLICY, obj)
 
+    @log_helpers.log_method_call
     def create_port_on_subnet(self, context, subnet_id, name, host,
         device_id, fixed_address_count=1):
         subnet = self.driver.plugin.db._core_plugin.get_subnet(context, subnet_id)
@@ -206,19 +211,24 @@ class ArrayLoadBalancerCallbacks(object):
         port_data[portbindings.PROFILE] = {}
         return self.driver.plugin.db._core_plugin.create_port(context, {'port': port_data})
 
+    @log_helpers.log_method_call
     def get_subnet(self, context, subnet_id):
         return self.driver.plugin.db._core_plugin.get_subnet(context, subnet_id)
 
+    @log_helpers.log_method_call
     def get_network(self, context, network_id):
         return self.driver.plugin.db._core_plugin.get_network(context, network_id)
 
+    @log_helpers.log_method_call
     def get_port(self, context, port_id):
         return self.driver.plugin.db._core_plugin.get_port(context, port_id)
 
+    @log_helpers.log_method_call
     def get_loadbalancer(self, context, loadbalancer_id):
         lb = self.driver.plugin.db.get_loadbalancer(context, loadbalancer_id)
         return lb.to_dict(stats=False)
 
+    @log_helpers.log_method_call
     def get_vlan_id_by_port_cmcc(self, context, port_id):
         vlan_tag = db.get_vlan_id_by_port_cmcc(context, port_id)
         if not vlan_tag:
@@ -226,6 +236,7 @@ class ArrayLoadBalancerCallbacks(object):
         ret = {'vlan_tag': str(vlan_tag)}
         return ret
 
+    @log_helpers.log_method_call
     def get_vlan_id_by_port_huawei(self, context, port_id):
         agent_hosts = []
         # FIXME: when invoking get_lbaas_agents, it SHOULD specify active=True
@@ -241,6 +252,7 @@ class ArrayLoadBalancerCallbacks(object):
         ret = {'vlan_tag': str(vlan_tag)}
         return ret
 
+    @log_helpers.log_method_call
     def get_excepted_vapvs(self, context):
         array_db = repository.ArrayLBaaSv2Repository()
         vapv = array_db.get_excepted_vapvs(context.session)
@@ -248,11 +260,13 @@ class ArrayLoadBalancerCallbacks(object):
             return None
         return vapv
 
+    @log_helpers.log_method_call
     def update_excepted_vapv_by_name(self, context, va_name):
         array_db = repository.ArrayLBaaSv2Repository()
         array_db.update_excepted_vapv_by_name(context.session,
             va_name)
 
+    @log_helpers.log_method_call
     def get_vapv_by_lb_id(self, context, vip_id):
         array_db = repository.ArrayLBaaSv2Repository()
         vapv = array_db.get(context.session, lb_id=vip_id)
@@ -260,6 +274,7 @@ class ArrayLoadBalancerCallbacks(object):
             return None
         return vapv
 
+    @log_helpers.log_method_call
     def get_va_name_by_lb_id(self, context, vip_id):
         array_db = repository.ArrayLBaaSv2Repository()
         vapv_name = array_db.get_va_name_by_lb_id(context.session, vip_id)
@@ -268,12 +283,32 @@ class ArrayLoadBalancerCallbacks(object):
         ret = {'vapv_name': str(vapv_name)}
         return ret
 
+    @log_helpers.log_method_call
     def generate_vapv(self, context):
         ret = None
         vapv_name = utils.generate_vapv(context)
         if vapv_name:
             ret = {'vapv_name': str(vapv_name)}
         return ret
+
+    @log_helpers.log_method_call
+    def get_segment_name_by_lb_id(self, context, vip_id):
+        ret = {'segment_name': ""}
+        array_db = repository.ArrayLBaaSv2Repository()
+        vapv_name = array_db.get_segment_name_by_lb_id(context.session, vip_id)
+        if vapv_name:
+            ret = {'segment_name': str(vapv_name)}
+        return ret
+
+    @log_helpers.log_method_call
+    def generate_ha_group_id(self, context, lb_id, subnet_id,
+        tenant_id, segment_name):
+        with context.session.begin(subtransactions=True):
+            group_id = utils.generate_ha_group_id(context, lb_id,
+                subnet_id, tenant_id, segment_name)
+            if group_id is None:
+                return None
+            return {'group_id': group_id}
 
     def generate_tags(self, context):
         ret = None
@@ -282,6 +317,7 @@ class ArrayLoadBalancerCallbacks(object):
             ret = {'vlan_tag': vlan_tag}
         return ret
 
+    @log_helpers.log_method_call
     def create_vapv(self, context, vapv_name, lb_id, subnet_id,
         in_use_lb, pri_port_id, sec_port_id, cluster_id):
         vapv = utils.create_vapv(context, vapv_name, lb_id,
@@ -289,9 +325,11 @@ class ArrayLoadBalancerCallbacks(object):
             cluster_id)
         return vapv
 
+    @log_helpers.log_method_call
     def delete_vapv(self, context, vapv_name):
         utils.delete_vapv(context, vapv_name)
 
+    @log_helpers.log_method_call
     def delete_port(self, context, port_id=None, mac_address=None):
         """Delete port."""
         if port_id:
@@ -308,6 +346,7 @@ class ArrayLoadBalancerCallbacks(object):
                     port['id']
                 )
 
+    @log_helpers.log_method_call
     def delete_port_by_name(self, context, port_name=None):
         """Delete port by name."""
         if port_name:
@@ -325,6 +364,7 @@ class ArrayLoadBalancerCallbacks(object):
             except Exception as e:
                 LOG.error("failed to delete port: %s", e.message)
 
+    @log_helpers.log_method_call
     def update_member_status(self, context, member_id=None,
         provisioning_status=None, operating_status=None):
         LOG.debug("-----enter update_member_status-----%s: %s" % (member_id, operating_status))
@@ -348,38 +388,110 @@ class ArrayLoadBalancerCallbacks(object):
                 LOG.error('Exception: update_member_status: %s',
                           e.message)
 
+    @log_helpers.log_method_call
     def scrub_dead_agents(self, context):
-        self.driver.array.scheduler.scrub_dead_agents(
-            context, self.driver.plugin, self.driver.array.environment
-        )
+        LOG.debug('scrubing dead agent bindings(%s)' % self.driver.array.environment)
+        with context.session.begin(subtransactions=True):
+            try:
+                self.driver.array.scheduler.scrub_dead_agents(
+                    context, self.driver.plugin, self.driver.array.environment)
+            except Exception as exc:
+                LOG.error('scrub dead agents exception: %s' % str(exc))
+                return False
+        return True
 
+    @log_helpers.log_method_call
+    def get_loadbalancer_ids(self, context):
+        with context.session.begin(subtransactions=True):
+            lbs = self.driver.plugin.db.get_loadbalancers(context)
+            return [(lb.id, lb.vip_subnet_id) for lb in lbs]
+
+    @log_helpers.log_method_call
     def check_subnet_used(self, context, subnet_id, lb_id_filter=None,
         member_id_filter=None):
         count = 0
-        lbs = self.driver.plugin.db.get_loadbalancers(context)
-        for lb in lbs:
-            if lb_id_filter and lb_id_filter == lb.id:
-                continue
-            if lb.vip_subnet_id == subnet_id:
-                count = 1
-                break
+        with context.session.begin(subtransactions=True):
+            lbs = self.driver.plugin.db.get_loadbalancers(context)
+            for lb in lbs:
+                if lb_id_filter and lb_id_filter == lb.id:
+                    continue
+                if lb.vip_subnet_id == subnet_id:
+                    count = 1
+                    break
 
-        if count == 1:
+            if count == 1:
+                ret = {'count': count}
+                return ret
+
+            members = self.driver.plugin.db.get_pool_members(context)
+            for member in members:
+                if member_id_filter and lb_id_filter == member.id:
+                    continue
+                if member.subnet_id == subnet_id:
+                    count = 1
+                    break
             ret = {'count': count}
             return ret
 
-        members = self.driver.plugin.db.get_pool_members(context)
-        for member in members:
-            if member_id_filter and lb_id_filter == member.id:
-                continue
-            if member.subnet_id == subnet_id:
-                count = 1
-                break
 
-        ret = {'count': count}
+    @log_helpers.log_method_call
+    def get_segment_used(self, context, segment_name, lb_id_filter=None):
+        ret = {'count': 0}
+        with context.session.begin(subtransactions=True):
+            array_db = repository.ArrayLBaaSv2Repository()
+            lb_ids = array_db.get_lb_ids_by_segment_name(context.session, segment_name)
+            LOG.debug("get_segment_used: current lb ids: %s", lb_ids)
+            if lb_id_filter:
+                lb_ids.remove(lb_id_filter)
+            ret = {'count': len(lb_ids)}
+        return ret
+
+    @log_helpers.log_method_call
+    def get_port_by_name(self, context, port_name=None):
+        """Get port by name."""
+        if port_name:
+            with context.session.begin(subtransactions=True):
+                filters = {'name': [port_name]}
+                ret_ports = self.driver.plugin.db._core_plugin.get_ports(
+                    context,
+                    filters=filters
+                )
+                LOG.debug("get_port_by_name: --%s-- returned" % ret_ports)
+                return ret_ports
+
+
+    @log_helpers.log_method_call
+    def get_vlan_tag_by_port_name(self, context, port_name):
+        """Get port by name."""
+        vlan_tag = '-1'
+        if port_name:
+            with context.session.begin(subtransactions=True):
+                filters = {'name': [port_name]}
+                ports = self.driver.plugin.db._core_plugin.get_ports(
+                    context, filters=filters)
+                if ports:
+                    return self.get_vlan_id_by_port_huawei(context, ports[0]['id'])
+                else:
+                    LOG.debug("Failed to get the port by port_name(%s)" % port_name)
+        else:
+            LOG.debug("The port_name cann't be NULL.")
+        ret = {'vlan_tag': vlan_tag}
         return ret
 
 
+    @log_helpers.log_method_call
+    def get_active_agents(self, context):
+        plugin = self.driver.plugin
+        active_agents = []
+        with context.session.begin(subtransactions=True):
+            active_agents = self.driver.array.scheduler.get_array_agent_candidates(
+                context,
+                plugin,
+                self.driver.array.environment
+            )
+        return active_agents
+
+    @log_helpers.log_method_call
     def get_members_status_on_agent(self, context, agent_host_name):
         lb_members = {}
         plugin = self.driver.plugin
@@ -406,3 +518,95 @@ class ArrayLoadBalancerCallbacks(object):
                             lb_members[lb.id] = lb_dict
             return lb_members
 
+    @log_helpers.log_method_call
+    def get_cluster_id_by_lb_id(self, context, lb_id):
+        array_db = repository.ArrayLBaaSv2Repository()
+        cluster_id = array_db.get_clusterids_by_id(context.session, lb_id)
+        if not cluster_id:
+            return None
+        return cluster_id
+
+    @log_helpers.log_method_call
+    def get_available_internal_ip(self, context, seg_name, seg_ip, use_for_nat=False):
+        array_db = repository.ArrayIPPoolsRepository()
+        if seg_name and seg_ip:
+            ip_pool = array_db.get_one_available_entry(context.session, seg_name, seg_ip, use_for_nat)
+            if ip_pool:
+                array_db.update(context.session, ip_pool.id,
+                    seg_name = seg_name, seg_ip = seg_ip,
+                    inter_ip = ip_pool.inter_ip, used = True, use_for_nat=use_for_nat)
+                return ip_pool.inter_ip
+            else:
+                return None
+        else:
+            return None
+
+    @log_helpers.log_method_call
+    def get_internal_ip_by_lb(self, context, seg_name, seg_ip, use_for_nat=False):
+        array_db = repository.ArrayIPPoolsRepository()
+        if seg_name and seg_ip:
+            return array_db.get_used_internal_ip(context.session, seg_name, seg_ip, use_for_nat)
+        else:
+            return None
+
+    @log_helpers.log_method_call
+    def createCounter(self, x):
+        f = [0]
+        def increase():
+            f[0] = f[0] + 1
+            if f[0] == x + 1:
+               f[0] = 1
+            return f[0]
+        return increase
+
+    @log_helpers.log_method_call
+    def get_array_interfaces(self):
+        interfaces = cfg.CONF.arraynetworks.array_interfaces
+        if interfaces:
+            LOG.debug("get the interfaces(%s) from configuration", interfaces)
+            interfaces_map = interfaces.split(",")
+            bonds_dic = {}
+            for interface_map in interfaces_map:
+                bond_map = interface_map.strip()
+                index = bond_map.index(":")
+                bond = bond_map[:index]
+                if bonds_dic.has_key(bond):
+                    bonds_dic[bond].append(bond_map[index + 1:])
+                else:
+                   ports = []
+                   ports.append(bond_map[index + 1:])
+                   bonds_dic[bond] = ports
+            return bonds_dic
+        else:
+            return {}
+
+    @log_helpers.log_method_call
+    def get_interfaces(self):
+        interfaces_dic = self.get_array_interfaces()
+        if interfaces_dic:
+            return interfaces_dic.keys()
+        else:
+            return []
+
+    @log_helpers.log_method_call
+    def get_interface_port(self, context, bond):
+        interfaces_dic = self.get_array_interfaces()
+        if interfaces_dic and interfaces_dic.has_key(bond):
+            return interfaces_dic[bond]
+        else:
+            LOG.error("Failed to get interface port from interfaces_dic(%s)", interfaces_dic)
+            return []
+
+    @log_helpers.log_method_call
+    def get_all_interfaces(self, context):
+        return self.interfaces
+
+    @log_helpers.log_method_call
+    def get_interface(self, context):
+        if len(self.interfaces) > 0:
+            interface = self.interfaces[self.next_interface() - 1]
+            LOG.debug("get the interface(%s) from get_interface", interface)
+            return interface
+        else:
+            LOG.error("Failed to get interface from interfaces(%s)", self.interfaces)
+            return None
