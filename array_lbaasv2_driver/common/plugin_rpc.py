@@ -122,66 +122,87 @@ class ArrayLoadBalancerCallbacks(object):
         else:
             LOG.error('Invalid obj_type: %s', obj_type)
 
+    @log_helpers.log_method_call
     def lb_successful_completion(self, context, obj, delete=False, lb_create=False):
         self._successful_completion(context, self.OBJ_TYPE_LB, obj, delete, lb_create)
 
+    @log_helpers.log_method_call
     def lb_deleting_completion(self, context, obj):
         self._deleting_completion(context, self.OBJ_TYPE_LB, obj)
 
+    @log_helpers.log_method_call
     def lb_failed_completion(self, context, obj):
         self._failed_completion(context, self.OBJ_TYPE_LB, obj)
 
+    @log_helpers.log_method_call
     def listener_successful_completion(self, context, obj):
         self._successful_completion(context, self.OBJ_TYPE_LISTENER, obj) 
 
+    @log_helpers.log_method_call
     def listener_deleting_completion(self, context, obj):
         self._deleting_completion(context, self.OBJ_TYPE_LISTENER, obj)
 
+    @log_helpers.log_method_call
     def listener_failed_completion(self, context, obj):
         self._failed_completion(context, self.OBJ_TYPE_LISTENER, obj)
 
+    @log_helpers.log_method_call
     def pool_successful_completion(self, context, obj):
         self._successful_completion(context, self.OBJ_TYPE_POOL, obj)
 
+    @log_helpers.log_method_call
     def pool_deleting_completion(self, context, obj):
         self._deleting_completion(context, self.OBJ_TYPE_POOL, obj)
 
+    @log_helpers.log_method_call
     def pool_failed_completion(self, context, obj):
         self._failed_completion(context, self.OBJ_TYPE_POOL, obj)
 
+    @log_helpers.log_method_call
     def member_successful_completion(self, context, obj):
         self._successful_completion(context, self.OBJ_TYPE_MEMBER, obj)
 
+    @log_helpers.log_method_call
     def member_deleting_completion(self, context, obj):
         self._deleting_completion(context, self.OBJ_TYPE_MEMBER, obj)
 
+    @log_helpers.log_method_call
     def member_failed_completion(self, context, obj):
         self._failed_completion(context, self.OBJ_TYPE_MEMBER, obj)
 
+    @log_helpers.log_method_call
     def hm_successful_completion(self, context, obj):
         self._successful_completion(context, self.OBJ_TYPE_HM, obj)
 
+    @log_helpers.log_method_call
     def hm_deleting_completion(self, context, obj):
         self._deleting_completion(context, self.OBJ_TYPE_HM, obj)
 
+    @log_helpers.log_method_call
     def hm_failed_completion(self, context, obj):
         self._failed_completion(context, self.OBJ_TYPE_HM, obj)
 
+    @log_helpers.log_method_call
     def l7rule_successful_completion(self, context, obj):
         self._successful_completion(context, self.OBJ_TYPE_L7RULE, obj)
 
+    @log_helpers.log_method_call
     def l7rule_deleting_completion(self, context, obj):
         self._deleting_completion(context, self.OBJ_TYPE_L7RULE, obj)
 
+    @log_helpers.log_method_call
     def l7rule_failed_completion(self, context, obj):
         self._failed_completion(context, self.OBJ_TYPE_L7RULE, obj)
 
+    @log_helpers.log_method_call
     def l7policy_successful_completion(self, context, obj):
         self._successful_completion(context, self.OBJ_TYPE_L7POLICY, obj)
 
+    @log_helpers.log_method_call
     def l7policy_deleting_completion(self, context, obj):
         self._deleting_completion(context, self.OBJ_TYPE_L7POLICY, obj)
 
+    @log_helpers.log_method_call
     def l7policy_failed_completion(self, context, obj):
         self._failed_completion(context, self.OBJ_TYPE_L7POLICY, obj)
 
