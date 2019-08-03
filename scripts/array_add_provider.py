@@ -154,8 +154,71 @@ class ArrayMultiProvider(object):
                     for value in values:
                         cfh.write(" ".join([opt, "=", value]) + '\n')
 
+    def _delete_provider(self):
+        # backup the neutorn_lbaas.conf
+        try:
+            os.remove(NEUTRON_LBAASCONF_BAK_PATH)
+        except OSError as exc:
+            if not exc.args[1] == 'No such file or directory':
+                raise
+        logging.debug('NEUTRON_LBAASCONFPATH: {0}'.format(NEUTRON_LBAASCONFPATH))
+        logging.debug(
+            'NEUTRON_LBAASCONF_BAK_PATH: {0}'.format(NEUTRON_LBAASCONF_BAK_PATH))
+        shutil.copy(NEUTRON_LBAASCONFPATH, NEUTRON_LBAASCONF_BAK_PATH)
 
-    def execute(self):
+        # append the new provider into neutorn_lbaas.conf
+        confline = "service_provider = LOADBALANCERV2:" + self.envir +\
+                   ":array_lbaasv2_driver_" + self.envir + ".v2.array_"+\
+                   self.envir + "." + self.envir
+        os.system('sed -i "/%s/d" %s' % (confline, NEUTRON_LBAASCONFPATH))
+        try:
+            shutil.rmtree(self.new_provider_path)
+        except OSError as exc:
+            if not exc.args[1] == 'No such file or directory':
+                raise
+        return True
+
+    def _update_provider(self):
+
+        try:
+            shutil.rmtree(self.new_provider_path)
+        except OSError as exc:
+            if not exc.args[1] == 'No such file or directory':
+                raise
+        logging.debug("Generate new provider module for update...")
+        if not self._generate_provider():
+            logging.debug("Failed to generate new provider module...")
+            return False
+
+        logging.debug("Generate new provider driver for update...")
+        if not self._generate_driver():
+            logging.debug("Generate new provider driver...")
+            return False
+        return True
+
+    def delete(self):
+        logging.debug("check the environment for delete...")
+        if self._check_env():
+            logging.debug("The enviroment has not existed")
+            return False
+        logging.debug("delete the environment...")
+        if not self._delete_provider():
+            logging.debug("failed to delete %s from neutorn_lbaas.conf", self.envir)
+            return False
+        return True
+
+    def update(self):
+        logging.debug("check the environment for update...")
+        if self._check_env():
+            logging.debug("The enviroment has not existed")
+            return False
+        logging.debug("update the environment...")
+        if not self._update_provider():
+            logging.debug("failed to update for %s", self.envir)
+            return False
+        return True
+
+    def add(self):
         logging.debug("Check the environment...")
         if not self._check_env():
             logging.debug("The environment has existed.")
@@ -180,14 +243,19 @@ class ArrayMultiProvider(object):
 def parse_options():
     parser = optparse.OptionParser();
 
+    parser.add_option("-o", "--operation", dest="opt",
+        help="Operation: add, delete, update", default='add')
     parser.add_option("-e", "--environment", dest="envir",
         help="Environment parameter")
+
     (options, args) = parser.parse_args()
 
     return options
 
 def main():
     init_log(LOG_FILE)
+    rc = None
+    rtn = None
     try:
         options = parse_options()
     except Usage, (msg, no_error):
@@ -207,7 +275,14 @@ def main():
         logging.error("Please input the environment!!!")
         return 0
     rc = ArrayMultiProvider(options.envir)
-    if rc.execute():
+    if not options.opt or options.opt == 'add':
+        rtn =  rc.add()
+    elif options.opt == 'delete':
+        rtn = rc.delete()
+    elif options.opt == 'update':
+        rtn = rc.update()
+
+    if rtn:
         return 0
     else:
         return 1
