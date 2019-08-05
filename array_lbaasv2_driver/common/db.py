@@ -28,19 +28,19 @@ LOG = logging.getLogger(__name__)
 
 DB_OPTS = [
     cfg.StrOpt(
-        'array_request_vlan_interval',
+        'sdn_request_vlan_interval',
         default=100,
         help=('Interval in millisecond to request VLAN ID'
               'from database')
     ),
     cfg.StrOpt(
-        'array_request_vlan_max_retries',
+        'sdn_request_vlan_max_retries',
         default=10,
         help=('Maximum number to try to request vlan'
               'from database')
     ),
     cfg.StrOpt(
-        'array_request_vlan_hostname',
+        'cmcc_request_vlan_hostname',
         default=10,
         help=('Hostname of port binding')
     )
@@ -92,8 +92,8 @@ def get_vlan_id_by_port_cmcc(context, port_id):
         return None
 
     attempts = 0
-    seconds_time = int(cfg.CONF.arraynetworks.array_request_vlan_interval) / 1000
-    retries = int(cfg.CONF.arraynetworks.array_request_vlan_max_retries)
+    seconds_time = int(cfg.CONF.arraynetworks.sdn_request_vlan_interval) / 1000
+    retries = int(cfg.CONF.arraynetworks.sdn_request_vlan_max_retries)
     while True:
         if attempts < retries:
             attempts += 1
@@ -104,7 +104,7 @@ def get_vlan_id_by_port_cmcc(context, port_id):
                   "%(retries)s attempts") % {'retries': retries}
             LOG.error(msg)
             return None
-        host = cfg.CONF.arraynetworks.array_request_vlan_hostname
+        host = cfg.CONF.arraynetworks.cmcc_request_vlan_hostname
         if not host:
             LOG.error("Unable to get host by port_id %(port_id)s", {'port_id': port_id})
             return None
@@ -131,8 +131,8 @@ def get_segment_id_by_port_huawei(context, port_id, agent_hosts):
     segment_id = None
 
     attempts = 0
-    seconds_time = int(cfg.CONF.arraynetworks.array_request_vlan_interval) / 1000
-    retries = int(cfg.CONF.arraynetworks.array_request_vlan_max_retries)
+    seconds_time = int(cfg.CONF.arraynetworks.sdn_request_vlan_interval) / 1000
+    retries = int(cfg.CONF.arraynetworks.sdn_request_vlan_max_retries)
     while True:
         if attempts < retries:
             attempts += 1
