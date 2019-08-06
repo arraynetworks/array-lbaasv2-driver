@@ -32,7 +32,6 @@ except Exception as e:
     LOG.debug("Failed to register opt(array_interface), maybe has been registered.")
 
 vapv_pool = []
-ha_group_ids = []
 
 def generate_vapv(context):
     global vapv_pool
@@ -58,11 +57,7 @@ def generate_vapv(context):
 
 
 def generate_ha_group_id(context, lb_id, subnet_id, tenant_id, segment_name):
-    global ha_group_ids
-
-    if not ha_group_ids:
-        for i in range(0, 260):
-            ha_group_ids.append(i)
+    ha_group_ids = range(0, 260)
 
     array_db = repository.ArrayLBaaSv2Repository()
     exist_ids = array_db.get_all_ids(context.session)
@@ -78,6 +73,26 @@ def generate_ha_group_id(context, lb_id, subnet_id, tenant_id, segment_name):
             sec_port_id=None, pri_port_id=segment_name,
             cluster_id=group_id)
         return group_id
+    return None
+
+
+def get_vlan_by_subnet_id(context, subnet_id):
+    all_vlan_tags = range(1, 4095)
+
+    vlan_mapping_db = repository.ArrayVlanMappingRepository()
+    tags = vlan_mapping_db.get_vlan_tag_by_subnet(context.session, subnet_id)
+
+    if len(tags) != 0:
+        return tags[0]
+    else:
+        exist_tags = vlan_mapping_db.get_all_tags(context.session)
+        LOG.debug("Exist tags: ----------%s----------", exist_tags)
+        diff_tags = [i for i in all_vlan_tags + exist_tags if i not in all_vlan_tags or i not in exist_tags]
+        if len(diff_tags) > 0:
+            vlan_tag = diff_tags[0]
+            vlan_mapping_db.create(context.session,
+                subnet_id=subnet_id, vlan_tag=vlan_tag)
+            return vlan_tag
     return None
 
 
@@ -110,16 +125,16 @@ def init_internal_ip_pool(context):
     for num in nums:
         internal_ip = "3.1." + str(num) + ".0"
         array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True, use_for_nat=False)
-        internal_ip = "3.3." + "0." + str(num) 
+        internal_ip = "3.3." + "0." + str(num)
         array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True, use_for_nat=True)
         internal_ip = "3.2." + str(num) + ".0"
         array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True, use_for_nat=False)
-        internal_ip = "3.4." + "0." + str(num) 
+        internal_ip = "3.4." + "0." + str(num)
         array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=True, use_for_nat=True)
     #IPV6
     nums = range(0, 512)
     for num in nums:
         internal_ip = "1234:0:" + str(num) + "::0"
         array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=False, use_for_nat=False)
-        internal_ip = "1235::" + str(num) 
+        internal_ip = "1235::" + str(num)
         array_db.create(context.session, inter_ip=internal_ip, used=False, ipv4=False, use_for_nat=True)

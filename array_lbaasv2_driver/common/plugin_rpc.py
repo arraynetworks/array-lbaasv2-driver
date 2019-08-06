@@ -331,11 +331,12 @@ class ArrayLoadBalancerCallbacks(object):
                 return None
             return {'group_id': group_id}
 
-    def generate_tags(self, context):
+    def get_vlan_by_subnet_id(self, context, subnet_id):
         ret = None
-        vlan_tag = utils.generate_tags(context)
-        if vlan_tag:
-            ret = {'vlan_tag': vlan_tag}
+        with context.session.begin(subtransactions=True):
+            vlan_tag = utils.get_vlan_by_subnet_id(context)
+            if vlan_tag:
+                ret = {'vlan_tag': vlan_tag}
         return ret
 
     @log_helpers.log_method_call

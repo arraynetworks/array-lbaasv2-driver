@@ -147,3 +147,15 @@ class ArrayIPPoolsRepository(BaseRepository):
         if ip_pool:
             return ip_pool.inter_ip
         return None
+
+class ArrayVlanMappingRepository(BaseRepository):
+    model_class = models.ArrayAPVIPPOOL
+
+    def get_vlan_tag_by_subnet(self, session, subnet_id):
+        mappings = session.query(self.model_class).filter_by(subnet_id=subnet_id)
+        return [mapping.vlan_tag for mapping in mappings]
+
+    def get_all_vlan_tags(self, session):
+        mappings = session.query(self.model_class).all()
+        return [mapping.vlan_tag for mapping in mappings]
+
