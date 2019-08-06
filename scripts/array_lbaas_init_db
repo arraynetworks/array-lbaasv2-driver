@@ -85,6 +85,9 @@ def main(argv):
             db = session_maker()
             db.query(arraylbaasv2).all()
         elif command == "drop":
+            print "will drop ...."
+            engine = create_engine(db_path, pool_recycle=300)
+            basetable.metadata.drop_all(engine)
             print "\nDone!\n"
         elif command == "initialize":
             print "will init ...."
