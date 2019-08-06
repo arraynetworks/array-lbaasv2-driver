@@ -561,9 +561,21 @@ class ArrayLoadBalancerCallbacks(object):
     def get_internal_ip_by_lb(self, context, seg_name, seg_ip, use_for_nat=False):
         array_db = repository.ArrayIPPoolsRepository()
         if seg_name and seg_ip:
-            return array_db.get_used_internal_ip(context.session, seg_name, seg_ip, use_for_nat)
+            return array_db.get_used_internal_ip(context.session, seg_name, seg_ip, use_for_nat).inter_ip
         else:
             return None
+
+    @log_helpers.log_method_call
+    def release_internal_ip_by_lb(self, context, seg_name, seg_ip, use_for_nat=False):
+        LOG.debug("request: release the internal ip by segment(%s) and ip(%s)", seg_name, seg_ip)
+        array_db = repository.ArrayIPPoolsRepository()
+        if seg_name and seg_ip:
+            ip_pool = array_db.get_used_internal_ip(context.session, seg_name, seg_ip, use_for_nat)
+            if ip_pool:
+                array_db.update(context.session, ip_pool.id,
+                    seg_name=None, seg_ip=None,
+                    inter_ip=ip_pool.inter_ip, used=False, use_for_nat=False)
+                LOG.debug("Released the internal ip(%s) by segment(%s) and ip(%s)", ip_pool.inter_ip, seg_name, seg_ip)
 
     @log_helpers.log_method_call
     def createCounter(self, x):

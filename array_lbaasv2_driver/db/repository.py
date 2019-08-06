@@ -145,5 +145,5 @@ class ArrayIPPoolsRepository(BaseRepository):
     def get_used_internal_ip(self, session, seg_name, seg_ip, use_for_nat):
         ip_pool = session.query(self.model_class).filter_by(seg_name=seg_name, seg_ip=seg_ip, use_for_nat=use_for_nat).first()
         if ip_pool:
-            return ip_pool.inter_ip
+            return ip_pool
         return None
