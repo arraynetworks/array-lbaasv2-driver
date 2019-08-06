@@ -86,7 +86,7 @@ class ArrayDriverV2(object):
         self.agent_rpc = agent_rpc.LBaaSv2AgentRPC(self)
 
         self.agent_endpoints = [
-            plugin_rpc.ArrayLoadBalancerCallbacks(driver),
+            plugin_rpc.ArrayLoadBalancerCallbacks(driver, environment),
             agents_db.AgentExtRpcCallback(self.plugin.db)
         ]
 
