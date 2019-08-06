@@ -23,6 +23,8 @@ from array_lbaasv2_driver.common import db
 from array_lbaasv2_driver.common import utils
 from array_lbaasv2_driver.db import repository
 from oslo_config import cfg
+from oslo_config.cfg import ConfigParser
+import os
 
 LOG = logging.getLogger(__name__)
 
@@ -41,10 +43,10 @@ class ArrayLoadBalancerCallbacks(object):
     OBJ_TYPE_L7RULE = "l7rule"
     OBJ_TYPE_L7POLICY = "l7policy"
 
-    def __init__(self, driver):
+    def __init__(self, driver, environment):
         LOG.debug('Apv status callbacks RPC subscriber initialized')
         self.driver = driver
-
+        self.environment = environment
         self._table = {
             "loadbalancer.success": self.driver.load_balancer.successful_completion,
             "loadbalancer.delete": self.driver.load_balancer.successful_completion,
@@ -575,7 +577,22 @@ class ArrayLoadBalancerCallbacks(object):
 
     @log_helpers.log_method_call
     def get_array_interfaces(self):
-        interfaces = cfg.CONF.arraynetworks.array_interfaces
+        interfaces = None
+        if self.environment:
+            array_conf = "/etc/neutron/conf.d/neutron-server/arraynetworks"
+            array_conf = array_conf + "-" + self.environment + ".conf"
+            if os.access(array_conf, os.F_OK):
+                try:
+                    conf = ConfigParser(array_conf, {})
+                    conf.parse()
+                    interfaces = conf.sections['arraynetworks']['array_interfaces'][0]
+                except Exception as exc:
+                    LOG.error("get arraynetworks configuration exception: %s" % str(exc))
+                    raise e
+            else:
+                LOG.error("Failed to access the arraynetworks configuration(%s)", array_conf)
+        else:
+            interfaces = cfg.CONF.arraynetworks.array_interfaces
         if interfaces:
             LOG.debug("get the interfaces(%s) from configuration", interfaces)
             interfaces_map = interfaces.split(",")
