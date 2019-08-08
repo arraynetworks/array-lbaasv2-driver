@@ -103,6 +103,7 @@ class ArrayVlanMapping(BaseTable, HAS_ID, HAS_TENANT):
 
     subnet_id = sa.Column(sa.String(36), nullable=False)
     vlan_tag = sa.Column(sa.Integer(), nullable=False)
+    vlan_uuid = sa.Column(sa.String(36), nullable=False)
 
     def to_dict(self, **kwargs):
         ret = {}

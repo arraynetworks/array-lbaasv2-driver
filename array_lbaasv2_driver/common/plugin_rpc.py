@@ -336,10 +336,17 @@ class ArrayLoadBalancerCallbacks(object):
     def get_vlan_by_subnet_id(self, context, subnet_id):
         ret = None
         with context.session.begin(subtransactions=True):
-            vlan_tag = utils.get_vlan_by_subnet_id(context)
+            vlan_tag, vlan_uuid = utils.get_vlan_by_subnet_id(context)
             if vlan_tag:
                 ret = {'vlan_tag': vlan_tag}
+                ret['vlan_uuid'] = vlan_uuid
         return ret
+
+    def update_vlan_uuid_by_subnet(self, context, subnet_id, vlan_uuid):
+        with context.session.begin(subtransactions=True):
+            vlan_mapping_db = repository.ArrayVlanMappingRepository()
+            vlan_mapping_db.update_vlan_uuid_by_subnet(context.session,
+                subnet_id, vlan_uuid)
 
     @log_helpers.log_method_call
     def create_vapv(self, context, vapv_name, lb_id, subnet_id,
@@ -608,7 +615,7 @@ class ArrayLoadBalancerCallbacks(object):
                     interfaces = conf.sections['arraynetworks']['array_interfaces'][0]
                 except Exception as exc:
                     LOG.error("get arraynetworks configuration exception: %s" % str(exc))
-                    raise e
+                    raise exc
             else:
                 LOG.error("Failed to access the arraynetworks configuration(%s)", array_conf)
         else:

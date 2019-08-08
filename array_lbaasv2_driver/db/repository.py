@@ -151,11 +151,19 @@ class ArrayIPPoolsRepository(BaseRepository):
 class ArrayVlanMappingRepository(BaseRepository):
     model_class = models.ArrayAPVIPPOOL
 
-    def get_vlan_tag_by_subnet(self, session, subnet_id):
+    def get_vlan_information_by_subnet(self, session, subnet_id):
         mappings = session.query(self.model_class).filter_by(subnet_id=subnet_id)
-        return [mapping.vlan_tag for mapping in mappings]
+        return [(mapping.vlan_tag, mapping.vlan_uuid) for mapping in mappings]
 
     def get_all_vlan_tags(self, session):
         mappings = session.query(self.model_class).all()
         return [mapping.vlan_tag for mapping in mappings]
+
+    def update_vlan_uuid_by_subnet(self, session, subnet_id, vlan_uuid):
+        updated = {}
+        updated['vlan_uuid'] = vlan_uuid
+        with session.begin(subtransactions=True):
+            session.query(self.model_class).filter_by(
+                subnet_id=subnet_id).update(updated)
+
 

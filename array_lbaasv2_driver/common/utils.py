@@ -80,10 +80,10 @@ def get_vlan_by_subnet_id(context, subnet_id):
     all_vlan_tags = range(1, 4095)
 
     vlan_mapping_db = repository.ArrayVlanMappingRepository()
-    tags = vlan_mapping_db.get_vlan_tag_by_subnet(context.session, subnet_id)
+    vlan_information = vlan_mapping_db.get_vlan_information_by_subnet(context.session, subnet_id)
 
-    if len(tags) != 0:
-        return tags[0]
+    if len(vlan_information) != 0:
+        return vlan_information[0]
     else:
         exist_tags = vlan_mapping_db.get_all_tags(context.session)
         LOG.debug("Exist tags: ----------%s----------", exist_tags)
@@ -92,8 +92,8 @@ def get_vlan_by_subnet_id(context, subnet_id):
             vlan_tag = diff_tags[0]
             vlan_mapping_db.create(context.session,
                 subnet_id=subnet_id, vlan_tag=vlan_tag)
-            return vlan_tag
-    return None
+            return (vlan_tag, None)
+    return (None, None)
 
 
 def create_vapv(context, vapv_name, lb_id, subnet_id, in_use_lb,
